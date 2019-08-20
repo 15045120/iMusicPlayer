@@ -15,4 +15,4 @@ Activity传参：https://blog.csdn.net/cxc19890214/article/details/39551459
 
 设置网络图片：https://blog.csdn.net/qq_33200967/article/details/77263062
 
-androidの布局控件居于最底部实现：https://blog.csdn.net/xiabing082/article/details/47657651
+androidの布局控件居于最底部实现：https://blog.csdn.net/u014019974/article/details/76660428

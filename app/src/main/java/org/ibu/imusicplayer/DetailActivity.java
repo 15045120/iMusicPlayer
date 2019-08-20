@@ -33,8 +33,11 @@ public class DetailActivity extends AppCompatActivity {
     MediaPlayer mediaPlayer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 隐藏顶部标题
+        getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+
         final TextView songTitleTextView = findViewById(R.id.song_title);
         final TextView songSingerTextView = findViewById(R.id.song_singer);
         final TextView songEpnameTextView = findViewById(R.id.song_epname);
