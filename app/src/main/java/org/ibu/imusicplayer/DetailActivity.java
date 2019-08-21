@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -16,6 +17,8 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,30 +43,17 @@ public class DetailActivity extends AppCompatActivity {
     TextView seekBarCurrentValue;
     TextView seekBarMaxValue;
     int maxValue;
- 
+
     // 初始化seekBar
     void initSeekBar(String lyric){
-        String lastTime = lyric.substring(lyric.lastIndexOf('['), lyric.lastIndexOf(']')+1);
-        maxValue = decodeTime(lastTime);
-        seekBar.setMax(maxValue);
-        seekBarMaxValue.setText(encodeTime(maxValue));
+//        // 使用正则表达式提取歌词最后一个时间（这里不准确）
+//        String lastTime = lyric.substring(lyric.lastIndexOf('['), lyric.lastIndexOf(']')+1);
+//        maxValue = decodeTime(lastTime);
+        seekBarMaxValue.setText("0:00");
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            // todo 监听滑动条滑动事件不要重写这个方法，因为调用setProgress时也会调用这个方法
             @Override
             public void onProgressChanged(final SeekBar seekBar, final int i, boolean b) {
-                if(mediaPlayer == null){
-                    searchMp3Url();
-                }else{
-                    mediaPlayer.seekTo(i);
-                    mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                        @Override
-                        public void onSeekComplete(MediaPlayer m) {
-                            m.start();
-                            seekBar.setProgress(i);
-                            
-                        }
-                    });
-                    seekBarCurrentValue.setText(encodeTime(i));
-                }
             }
 
             @Override
@@ -72,11 +62,43 @@ public class DetailActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+            public void onStopTrackingTouch(final SeekBar seekBar) {
+                if(mediaPlayer == null){
+                    searchMp3Url();
+                }else{
+                    final int i = seekBar.getProgress();
+                    mediaPlayer.seekTo(i);
+                    mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                        @Override
+                        public void onSeekComplete(MediaPlayer m) {
+                            // 移除所有任务
+                            if(timer !=null) {
+                                timer.purge();
+                                timer = null;
+                            }
 
+                            m.start();
+                            timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    if(mediaPlayer!=null) {
+                                        try {
+                                            seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                        }catch (IllegalStateException e){
+                                            Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                        }
+                                    }
+                                }
+                            },0, 1000);
+                        }
+                    });
+                    seekBarCurrentValue.setText(encodeTime(i));
+                }
             }
         });
     }
+    Timer timer;
     int decodeTime(String time){
         Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)\\.([0-9]*)\\]");
         Matcher matcher = pattern.matcher(time);
@@ -180,7 +202,12 @@ public class DetailActivity extends AppCompatActivity {
                             }
                         });
                     }else{
-                        Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                        DetailActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                     // 在子线程中跟新UI
 
@@ -206,6 +233,21 @@ public class DetailActivity extends AppCompatActivity {
                 //暂停转为播放状态
                 if(mediaPlayer!=null && !mediaPlayer.isPlaying()){
                     mediaPlayer.start();
+                    // 定时任务，每一秒更新一下seekBar
+                    timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            if(mediaPlayer!=null) {
+                                try {
+                                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                    seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
+                                }catch (IllegalStateException e){
+                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                }
+                            }
+                        }
+                    },0, 1000);
                     return;
                 }
                 if(mediaPlayer == null){//刚进入该页面
@@ -221,6 +263,11 @@ public class DetailActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if(mediaPlayer != null && mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
+                    // 移除所有任务
+                    if(timer !=null) {
+                        timer.purge();
+                        timer = null;
+                    }
                 }
             }
         });
@@ -243,36 +290,67 @@ public class DetailActivity extends AppCompatActivity {
                         String result = convertStreamToString(inputStream);
                         Log.d("IMUSICPLAYER_MP3", result);
                         JSONObject obj = new JSONObject(result);
-                        final JSONObject songObj = ((JSONArray)obj.get("data")).getJSONObject(0);
+                        final JSONObject songObj = obj.getJSONArray(RESPONSE_DATA_DATA).getJSONObject(0);
                         // 通过HTTP流媒体从远程URL播放
-                        if(songObj.getString("url") !=null){
-                            Log.d("searchMp3Url", songObj.getString("url"));
-                            String mp3Url = songObj.getString("url");
+                        String mp3Url = songObj.getString(RESPONSE_DATA_URL);
+                        // url可能是null字符串
+                        if(mp3Url !=null && !mp3Url.trim().equalsIgnoreCase("null")){
+                            Log.d("IMUSICPLAYER_MP3_URL", songObj.getString(RESPONSE_DATA_URL));
+
                             // 初始化mediaPlayer
                             mediaPlayer = new MediaPlayer();
-                            mediaPlayer.reset();
                             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                             mediaPlayer.setDataSource(mp3Url);
                             mediaPlayer.prepareAsync();
                             mediaPlayer.setLooping(true);
                             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
-                                public void onPrepared(MediaPlayer mediaPlayer) {
+                                public void onPrepared(final MediaPlayer m) {
+                                    // 获取音频时间
+                                    maxValue = mediaPlayer.getDuration();
+                                    seekBar.setMax(maxValue);
+                                    seekBarMaxValue.setText(encodeTime(maxValue));
+                                    // 开始播放
                                     mediaPlayer.start();
-
+                                    timer = new Timer();
+                                    timer.schedule(new TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            if(mediaPlayer!=null) {
+                                                try {
+                                                    // 调用mediaPlayer.release()后进入到END状态，
+                                                    // mediaPlayer.getCurrentPosition()会出现IllegalStateException
+                                                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                                    seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
+                                                }catch (IllegalStateException e){
+                                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                                }
+                                            }
+                                        }
+                                    },0, 1000);
                                 }
                             });
 
                         }else{
-                            Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                            DetailActivity.this.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     }else{
-                        Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                        DetailActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                     // 在子线程中跟新UI
 
                 }catch(Exception e){
-                    Log.d("SEARCH_ERROR", e.getMessage());
+                    Log.d("IMUSICPLAYER_MP3", e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -284,6 +362,11 @@ public class DetailActivity extends AppCompatActivity {
         if(mediaPlayer != null){
             mediaPlayer.release();
             mediaPlayer = null;
+            // 移除所有任务
+            if(timer !=null) {
+                timer.purge();
+                timer = null;
+            }
         }
     }
 }

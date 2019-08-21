@@ -12,9 +12,11 @@ final class Music163Contants {
     final static String RESPONSE_DATA_SONGS = "songs";
     final static String RESPONSE_DATA_ID = "id";
     final static String RESPONSE_DATA_ALBUM = "album";
-    final static String RESPONSE_DATA_PICURL= "picUrl";
-    final static String RESPONSE_DATA_ARTISTS= "artists";
-    final static String RESPONSE_DATA_NAME= "name";
-    final static String RESPONSE_DATA_LRC= "lrc";
-    final static String RESPONSE_DATA_LYRIC= "lyric";
+    final static String RESPONSE_DATA_PICURL = "picUrl";
+    final static String RESPONSE_DATA_ARTISTS = "artists";
+    final static String RESPONSE_DATA_NAME = "name";
+    final static String RESPONSE_DATA_LRC = "lrc";
+    final static String RESPONSE_DATA_LYRIC = "lyric";
+    final static String RESPONSE_DATA_DATA = "data";
+    final static String RESPONSE_DATA_URL = "url";
 }
