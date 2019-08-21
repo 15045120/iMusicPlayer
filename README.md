@@ -5,4 +5,4 @@
 <img src="https://github.com/15045120/iMusicPlayer/blob/master/docs/Screenshot_2.jpg" width="280" height="500"></img>
 <img src="https://github.com/15045120/iMusicPlayer/blob/master/docs/Screenshot_4.jpg" width="280" height="500"></img>
 <br>下载地址：
-https://15045120.github.io/apk/imusicplayer.apk
+https://github.com/15045120/iMusicPlayer/releases/download/1.00/imusicplayer-1.00.apk
