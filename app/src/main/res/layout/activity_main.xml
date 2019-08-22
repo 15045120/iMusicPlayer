@@ -32,19 +32,64 @@
     </LinearLayout>
     <!--加载状态-->
     <LinearLayout
-            android:id="@+id/main_loading_block"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-        <ProgressBar
-                style="?android:attr/progressBarStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-    </LinearLayout>
-    <ListView
-        android:id="@+id/song_name_list"
+        android:id="@+id/main_loading_block"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        />
+        android:orientation="vertical">
+
+        <ProgressBar
+            style="?android:attr/progressBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <ListView
+            android:id="@+id/song_name_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+        <LinearLayout
+            android:id="@+id/collected_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+
+            android:background="@drawable/bg_menu_button"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="40dp"
+            android:layout_marginBottom="40dp">
+            <ImageView
+
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+
+                android:visibility="visible"
+                app:srcCompat="@drawable/ic_star_white_24dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textAlignment="center"
+                android:text="收藏夹"/>
+        </LinearLayout>
+
+
+        <!--<ImageView-->
+            <!--android:id="@+id/downloaded_icon"-->
+            <!--android:layout_above="@id/collected_icon"-->
+            <!--android:layout_width="40dp"-->
+            <!--android:layout_height="40dp"-->
+            <!--android:layout_alignParentRight="true"-->
+            <!--android:layout_marginRight="20dp"-->
+            <!--android:layout_marginBottom="20dp"-->
+            <!--android:background="@drawable/bg_menu_button"-->
+            <!--app:srcCompat="@drawable/ic_star_white_24dp" />-->
+
+    </RelativeLayout>
+
 </LinearLayout>

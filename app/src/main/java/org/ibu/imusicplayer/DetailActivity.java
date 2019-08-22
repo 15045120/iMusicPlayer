@@ -5,13 +5,11 @@ import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.InputStream;
@@ -19,9 +17,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import static org.ibu.imusicplayer.LyricUtil.encodeTime;
 import static org.ibu.imusicplayer.MainActivity.convertStreamToString;
 import static org.ibu.imusicplayer.Music163Contants.*;
 
@@ -35,14 +32,10 @@ public class DetailActivity extends AppCompatActivity {
 
     String songId;
 
-    LinearLayout playButton;
-    LinearLayout pauseButton;
-
     MediaPlayer mediaPlayer;
     SeekBar seekBar;
     TextView seekBarCurrentValue;
     TextView seekBarMaxValue;
-    int maxValue;
 
     // 初始化seekBar
     void initSeekBar(String lyric){
@@ -63,72 +56,53 @@ public class DetailActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(final SeekBar seekBar) {
-                if(mediaPlayer == null){
-                    searchMp3Url();
-                }else{
-                    final int i = seekBar.getProgress();
-                    mediaPlayer.seekTo(i);
-                    mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                        @Override
-                        public void onSeekComplete(MediaPlayer m) {
-                            // 移除所有任务
-                            if(timer !=null) {
-                                timer.purge();
-                                timer = null;
-                            }
+                if(isPlaying){
+                    if(mediaPlayer == null){
+                        searchMp3Url();
+                    }else{
+                        final int i = seekBar.getProgress();
+                        mediaPlayer.seekTo(i);
+                        mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                            @Override
+                            public void onSeekComplete(MediaPlayer m) {
+                                // 移除所有任务
+                                if(timer !=null) {
+                                    timer.purge();
+                                    timer = null;
+                                }
 
-                            m.start();
-                            timer = new Timer();
-                            timer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    if(mediaPlayer!=null) {
-                                        try {
-                                            seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                                        }catch (IllegalStateException e){
-                                            Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                mediaPlayer.start();
+                                timer = new Timer();
+                                timer.schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        if(mediaPlayer!=null) {
+                                            try {
+                                                seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                            }catch (IllegalStateException e){
+                                                Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                            }
                                         }
                                     }
-                                }
-                            },0, 1000);
-                        }
-                    });
-                    seekBarCurrentValue.setText(encodeTime(i));
+                                },0, 1000);
+                            }
+                        });
+                        seekBarCurrentValue.setText(encodeTime(i));
+                    }
                 }
             }
         });
     }
     Timer timer;
-    int decodeTime(String time){
-        Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)\\.([0-9]*)\\]");
-        Matcher matcher = pattern.matcher(time);
-        if(matcher.matches()) {
-            String m1 = matcher.group(1);
-            String m2 = matcher.group(2);
-            String m3 = matcher.group(3);
-            Log.d("IMUSICPLAYER", m1 + ":" + m2 + "." + m3);
-            return Integer.valueOf(m1) * 60 * 1000 + Integer.valueOf(m2) * 1000 + Integer.valueOf(m3);
-        }
-        return 0;
-    }
-    String encodeTime(int time){
-        String m1 = "00";
-        String m2 = "00";
-        if(time / 60000 != 0){
-            m1  = Integer.toString(time / 60000);
-            if((time - (time/60000)*60000) / 1000 != 0){
-                m2 = Integer.toString((time - (time/60000)*60000) / 1000);
-            }
-        }else{
-            if(time / 1000 != 0){
-                m2 = Integer.toString(time / 1000);
-            }
-        }
-        return (m1.length()!=2?("0"+m1):m1) + ":" + (m2.length()!=2?("0"+m2):m2);
-    }
 
     LinearLayout loadingBlock;
     LinearLayout loadedBlock;
+
+    CollectOpenHelper dbHelper;
+
+    boolean isPlaying = false;
+    ImageView playIcon;
+    TextView playText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 隐藏顶部标题
@@ -140,6 +114,9 @@ public class DetailActivity extends AppCompatActivity {
         loadedBlock.setVisibility(View.INVISIBLE);
         // 初始化songId
         songId = getIntent().getStringExtra(DETAIL_SONG_ID);
+        final String title = getIntent().getStringExtra(DETAIL_SONG_TITLE);
+        final String singer = getIntent().getStringExtra(DETAIL_SONG_SINGER);
+        final String epname = getIntent().getStringExtra(DETAIL_SONG_EPNAME);
         // 初始化歌曲名信息
         TextView songTitleTextView = findViewById(R.id.song_title);
         TextView songSingerEpnameTextView = findViewById(R.id.song_singer_epname);
@@ -152,12 +129,53 @@ public class DetailActivity extends AppCompatActivity {
         // 初始化歌曲封面
         final ImageView songPicImageView = findViewById(R.id.song_pic);
         final String picUrl = getIntent().getStringExtra(DETAIL_SONG_PICURL);
+        // 初始化是否收藏
+        dbHelper = new CollectOpenHelper(this);
+        final TextView collectedText = findViewById(R.id.collected_text);
+        final ImageView collectButton = findViewById(R.id.collect_icon);
+        if(dbHelper.exist(songId) == null) {
+            collectedText.setText("收藏");
+            collectButton.setImageResource(R.drawable.ic_star_border_black_24dp);
+        }else {
+            collectedText.setText("已收藏");
+            collectButton.setImageResource(R.drawable.ic_star_black_24dp);
+        }
+        // 监听收藏按钮
+        collectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(dbHelper.exist(songId) == null) {
+                    dbHelper.insert(new Song(songId, title, singer, epname, picUrl));
+                    collectedText.setText("已收藏");
+                    collectButton.setImageResource(R.drawable.ic_star_black_24dp);
+                }else {
+                    dbHelper.delete(songId);
+                    collectedText.setText("收藏");
+                    collectButton.setImageResource(R.drawable.ic_star_border_black_24dp);
+                }
+            }
+        });
+        // 初始化是否下载
+//        final TextView downloadedText = findViewById(R.id.downloaded_text);
+//        final ImageView downloadButton = findViewById(R.id.download_icon);
+//        downloadButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if(dbHelper.exist(songId) == null) {
+//                    downloadedText.setText("已下载");
+//                    downloadButton.setImageResource(R.drawable.ic_file_download_black_24dp);
+//                }else {
+//                    downloadedText.setText("下载");
+//                    downloadButton.setImageResource(R.drawable.ic_download_finished);
+//                }
+//            }
+//        });
         // 初始化seekBar
         seekBar = findViewById(R.id.song_seekbar);
         seekBarCurrentValue = findViewById(R.id.song_seekbar_current_value);
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue = findViewById(R.id.song_seekbar_max_value);
-
+        // 查找歌词
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -195,10 +213,10 @@ public class DetailActivity extends AppCompatActivity {
                         DetailActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                    songLyricTextView.setText(lyric);
-                                    initSeekBar(lyric);
-                                    loadingBlock.setVisibility(View.GONE);
-                                    loadedBlock.setVisibility(View.VISIBLE);
+                                songLyricTextView.setText(lyric);
+                                initSeekBar(lyric);
+                                loadingBlock.setVisibility(View.GONE);
+                                loadedBlock.setVisibility(View.VISIBLE);
                             }
                         });
                     }else{
@@ -217,62 +235,62 @@ public class DetailActivity extends AppCompatActivity {
                 }
             }
         }).start();
-
-
-
-        playButton = findViewById(R.id.play_icon);
-        pauseButton = findViewById(R.id.pause_icon);
-
-
-
-
-        playButton.setOnClickListener(new View.OnClickListener() {
+        // 播放暂停按钮监听
+        playIcon = findViewById(R.id.play_icon);
+        playText = findViewById(R.id.play_text);
+        LinearLayout playBlock = findViewById(R.id.play_icon_block);
+        playBlock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("IMUSICPLAYER_MP3","click play button");
-                //暂停转为播放状态
-                if(mediaPlayer!=null && !mediaPlayer.isPlaying()){
-                    mediaPlayer.start();
-                    // 定时任务，每一秒更新一下seekBar
-                    timer = new Timer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            if(mediaPlayer!=null) {
-                                try {
-                                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                                    seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
-                                }catch (IllegalStateException e){
-                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                // 显示播放按钮
+                if(!isPlaying){
+                    Log.d("IMUSICPLAYER_MP3","isPlaying=false");
+                    //暂停转为播放状态
+                    if(mediaPlayer!=null){
+                        // 更新按钮图片
+                        playIcon.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                        playText.setText("暂停");
+                        isPlaying = true;
+                        mediaPlayer.start();
+                        // 定时任务，每一秒更新一下seekBar
+                        timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                if(mediaPlayer!=null) {
+                                    try {
+                                        seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                        seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
+                                    }catch (IllegalStateException e){
+                                        Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                    }
                                 }
                             }
+                        },0, 1000);
+                        return;
+                    }else{//刚进入该页面
+                        searchMp3Url();
+                    }
+                }else{// 显示暂停按钮
+                    Log.d("IMUSICPLAYER_MP3","isPlaying=true");
+                    if(mediaPlayer != null && mediaPlayer.isPlaying()){
+                        mediaPlayer.pause();
+                        // 更新按钮图片
+                        playIcon.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+                        playText.setText("播放");
+                        isPlaying = false;
+                        // 移除所有任务
+                        if(timer !=null) {
+                            timer.purge();
+                            timer = null;
                         }
-                    },0, 1000);
-                    return;
-                }
-                if(mediaPlayer == null){//刚进入该页面
-                    searchMp3Url();
-                }else if(mediaPlayer.isPlaying()){// 正在播放状态，什么也不处理
-
-                }
-
-            }
-        });
-        pauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mediaPlayer != null && mediaPlayer.isPlaying()){
-                    mediaPlayer.pause();
-                    // 移除所有任务
-                    if(timer !=null) {
-                        timer.purge();
-                        timer = null;
                     }
                 }
+
             }
         });
-
     }
+
     void searchMp3Url(){
         new Thread(new Runnable() {
             @Override
@@ -307,9 +325,13 @@ public class DetailActivity extends AppCompatActivity {
                                 @Override
                                 public void onPrepared(final MediaPlayer m) {
                                     // 获取音频时间
-                                    maxValue = mediaPlayer.getDuration();
+                                    int maxValue = mediaPlayer.getDuration();
                                     seekBar.setMax(maxValue);
                                     seekBarMaxValue.setText(encodeTime(maxValue));
+                                    // 更新按钮图片
+                                    playIcon.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                                    playText.setText("暂停");
+                                    isPlaying = true;
                                     // 开始播放
                                     mediaPlayer.start();
                                     timer = new Timer();

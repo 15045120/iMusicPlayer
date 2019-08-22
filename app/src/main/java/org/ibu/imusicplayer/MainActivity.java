@@ -64,6 +64,18 @@ public class MainActivity extends AppCompatActivity {
         songListView = findViewById(R.id.song_name_list);
         loadingBlock = findViewById(R.id.main_loading_block);
         loadingBlock.setVisibility(View.INVISIBLE);
+
+        LinearLayout collectButton = findViewById(R.id.collected_icon);
+        collectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
+                startActivity(intent);
+            }
+        });
+//        ImageView downloadButton = findViewById(R.id.downloaded_icon);
+//        collectButton.bringToFront();
+//        downloadButton.bringToFront();
         // add send action
         songNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
