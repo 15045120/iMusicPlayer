@@ -21,7 +21,8 @@ public class CollectActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collect);
-        this.setTitle("收藏夹");
+        getSupportActionBar().hide();
+//        this.setTitle("收藏夹");
         collectSongListView = findViewById(R.id.collect_song_name_list);
     }
 

@@ -51,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
     }
     ListView songListView;
     LinearLayout loadingBlock;
+    LinearLayout menuBlock;
+    @Override
+    protected void onStart() {
+        super.onStart();
+        menuBlock.setVisibility(View.INVISIBLE);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 隐藏顶部标题
@@ -64,8 +71,20 @@ public class MainActivity extends AppCompatActivity {
         songListView = findViewById(R.id.song_name_list);
         loadingBlock = findViewById(R.id.main_loading_block);
         loadingBlock.setVisibility(View.INVISIBLE);
-
-        LinearLayout collectButton = findViewById(R.id.collected_icon);
+        // 自定义更多按钮
+        menuBlock = findViewById(R.id.menu_block);
+        ImageView moreIcon = findViewById(R.id.more_icon);
+        moreIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(menuBlock.getVisibility() == View.INVISIBLE){
+                    menuBlock.setVisibility(View.VISIBLE);
+                }else{
+                    menuBlock.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        TextView collectButton = findViewById(R.id.menu_collect_text);
         collectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -73,9 +92,24 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-//        ImageView downloadButton = findViewById(R.id.downloaded_icon);
-//        collectButton.bringToFront();
-//        downloadButton.bringToFront();
+        TextView aboutButton = findViewById(R.id.menu_about_text);
+        aboutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), AboutActivity.class);
+                startActivity(intent);
+            }
+        });
+        TextView shareButton = findViewById(R.id.menu_share_text);
+        shareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent textIntent = new Intent(Intent.ACTION_SEND);
+                textIntent.setType("text/plain");
+                textIntent.putExtra(Intent.EXTRA_TEXT, "分享“爱音乐”-https://github.com/15045120/iMusicPlayer/releases/download/1.02/imusicplayer-1.02.apk");
+                startActivity(Intent.createChooser(textIntent, "分享"));
+            }
+        });
         // add send action
         songNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override

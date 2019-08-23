@@ -4,17 +4,17 @@
     android:shape="rectangle">
     <!--填充色-->
     <!--<solid android:color="#f45d5d" />-->
-    <solid android:color="#0079F5" />
+    <solid android:color="#ffffff" />
     <!--边框线-->
-    <!--<stroke-->
-        <!--android:width="0.03dp"-->
-        <!--android:color="#A8A8A8" />-->
+    <stroke
+        android:width="0.04dp"
+        android:color="#A8A8A8" />
     <!--间距-->
     <padding
-        android:bottom="8dp"
-        android:left="8dp"
-        android:right="8dp"
-        android:top="8dp" />
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp" />
     <!--圆角-->
-    <corners android:radius="20dp" />
+    <corners android:radius="10dp" />
 </shape>

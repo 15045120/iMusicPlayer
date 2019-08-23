@@ -1,10 +1,15 @@
 package org.ibu.imusicplayer;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -12,12 +17,14 @@ import android.view.View;
 import android.widget.*;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static org.ibu.imusicplayer.DownloadMp3Util.IMUSICPLAYER_DOWNLOAD_DIR;
 import static org.ibu.imusicplayer.LyricUtil.encodeTime;
 import static org.ibu.imusicplayer.MainActivity.convertStreamToString;
 import static org.ibu.imusicplayer.Music163Contants.*;
@@ -96,13 +103,19 @@ public class DetailActivity extends AppCompatActivity {
     Timer timer;
 
     LinearLayout loadingBlock;
-    LinearLayout loadedBlock;
+    RelativeLayout loadedBlock;
 
     CollectOpenHelper dbHelper;
 
     boolean isPlaying = false;
     ImageView playIcon;
     TextView playText;
+
+    Song mSong;
+    DownloadOpenHelper downloadOpenHelper;
+    ImageView downloadIcon;
+    int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 隐藏顶部标题
@@ -129,6 +142,8 @@ public class DetailActivity extends AppCompatActivity {
         // 初始化歌曲封面
         final ImageView songPicImageView = findViewById(R.id.song_pic);
         final String picUrl = getIntent().getStringExtra(DETAIL_SONG_PICURL);
+        // 初始化Song
+        mSong = new Song(songId, title, singer, epname, picUrl);
         // 初始化是否收藏
         dbHelper = new CollectOpenHelper(this);
         final TextView collectedText = findViewById(R.id.collected_text);
@@ -155,26 +170,36 @@ public class DetailActivity extends AppCompatActivity {
                 }
             }
         });
-        // 初始化是否下载
-//        final TextView downloadedText = findViewById(R.id.downloaded_text);
-//        final ImageView downloadButton = findViewById(R.id.download_icon);
-//        downloadButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if(dbHelper.exist(songId) == null) {
-//                    downloadedText.setText("已下载");
-//                    downloadButton.setImageResource(R.drawable.ic_file_download_black_24dp);
-//                }else {
-//                    downloadedText.setText("下载");
-//                    downloadButton.setImageResource(R.drawable.ic_download_finished);
-//                }
-//            }
-//        });
         // 初始化seekBar
         seekBar = findViewById(R.id.song_seekbar);
         seekBarCurrentValue = findViewById(R.id.song_seekbar_current_value);
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue = findViewById(R.id.song_seekbar_max_value);
+        // 初始化下载按钮
+        downloadIcon = findViewById(R.id.download_icon);
+        downloadOpenHelper = new DownloadOpenHelper(this);
+        downloadIcon.setVisibility(View.INVISIBLE);
+        downloadIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ContextCompat.checkSelfPermission(DetailActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    //申请WRITE_EXTERNAL_STORAGE权限
+                    ActivityCompat.requestPermissions(DetailActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                }else{
+                    // 下载Mp3文件至本地
+                    DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
+                    if (downloadMp3Util.downloadToStorage()) {
+                        downloadIcon.setVisibility(View.GONE);
+                        downloadOpenHelper.insert(mSong);
+                        Toast.makeText(DetailActivity.this, mSong.getTitle()+".mp3"+"已保存至/storage/emulated/0/iMusicPlayer/download/", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
         // 查找歌词
         new Thread(new Runnable() {
             @Override
@@ -290,93 +315,176 @@ public class DetailActivity extends AppCompatActivity {
             }
         });
     }
-
+    // 动态申请权限后回调方法
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
+                // 下载Mp3文件至本地
+                DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
+                if (downloadMp3Util.downloadToStorage()) {
+                    downloadIcon.setVisibility(View.GONE);
+                    downloadOpenHelper.insert(mSong);
+                    Toast.makeText(DetailActivity.this, mSong.getTitle()+".mp3"+"已保存至/storage/emulated/0/iMusicPlayer/download/", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
+                }
+            }else{// 授权失败
+                Toast.makeText(DetailActivity.this, "请允许存储权限，下载歌曲", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     void searchMp3Url(){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String searchMp3Url = music163Mp3Url.replace("arg_id", songId);
-                Log.d("IMUSICPLAYER_MP3", searchMp3Url);
-                try{
-                    URL url = new URL(searchMp3Url);
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        InputStream inputStream = connection.getInputStream();
-                        String result = convertStreamToString(inputStream);
-                        Log.d("IMUSICPLAYER_MP3", result);
-                        JSONObject obj = new JSONObject(result);
-                        final JSONObject songObj = obj.getJSONArray(RESPONSE_DATA_DATA).getJSONObject(0);
-                        // 通过HTTP流媒体从远程URL播放
-                        String mp3Url = songObj.getString(RESPONSE_DATA_URL);
-                        // url可能是null字符串
-                        if(mp3Url !=null && !mp3Url.trim().equalsIgnoreCase("null")){
-                            Log.d("IMUSICPLAYER_MP3_URL", songObj.getString(RESPONSE_DATA_URL));
+        // download表中有，使用本地资源
+        if(downloadOpenHelper.exist(mSong.getId()) != null){
+            try {
+                String mp3Url = downloadOpenHelper.exist(mSong.getId()).getMp3Url();
+                // 设置MP3url
+                mSong.setMp3Url(mp3Url);
+                Log.d("IMUSICPLAYER_MP3_URL", "使用本地资源"+IMUSICPLAYER_DOWNLOAD_DIR + mSong.getTitle() + ".mp3");
+                downloadIcon.setVisibility(View.GONE);
+                // 初始化mediaPlayer
+                Uri mp3Uri = Uri.fromFile(new File(IMUSICPLAYER_DOWNLOAD_DIR + mSong.getTitle() + ".mp3")); // initialize Uri here
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mediaPlayer.setDataSource(getApplicationContext(), mp3Uri);
+                mediaPlayer.prepareAsync();
+                mediaPlayer.setLooping(true);
+                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(final MediaPlayer m) {
+                        // 获取音频时间
+                        int maxValue = mediaPlayer.getDuration();
+                        seekBar.setMax(maxValue);
+                        seekBarMaxValue.setText(encodeTime(maxValue));
+                        // 更新按钮图片
+                        playIcon.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                        playText.setText("暂停");
+                        isPlaying = true;
+                        // 开始播放
+                        mediaPlayer.start();
+                        timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                if (mediaPlayer != null) {
+                                    try {
+                                        // 调用mediaPlayer.release()后进入到END状态，
+                                        // mediaPlayer.getCurrentPosition()会出现IllegalStateException
+                                        seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                        seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
+                                    } catch (IllegalStateException e) {
+                                        Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                    }
+                                }
+                            }
+                        }, 0, 1000);
+                    }
+                });
+            }catch (Exception e){
+                Log.d("IMUSICPLAYER_MP3", e.getMessage());
+                e.printStackTrace();
+            }
 
-                            // 初始化mediaPlayer
-                            mediaPlayer = new MediaPlayer();
-                            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                            mediaPlayer.setDataSource(mp3Url);
-                            mediaPlayer.prepareAsync();
-                            mediaPlayer.setLooping(true);
-                            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                @Override
-                                public void onPrepared(final MediaPlayer m) {
-                                    // 获取音频时间
-                                    int maxValue = mediaPlayer.getDuration();
-                                    seekBar.setMax(maxValue);
-                                    seekBarMaxValue.setText(encodeTime(maxValue));
-                                    // 更新按钮图片
-                                    playIcon.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
-                                    playText.setText("暂停");
-                                    isPlaying = true;
-                                    // 开始播放
-                                    mediaPlayer.start();
-                                    timer = new Timer();
-                                    timer.schedule(new TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            if(mediaPlayer!=null) {
-                                                try {
-                                                    // 调用mediaPlayer.release()后进入到END状态，
-                                                    // mediaPlayer.getCurrentPosition()会出现IllegalStateException
-                                                    seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                                                    seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
-                                                }catch (IllegalStateException e){
-                                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+        }else {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String searchMp3Url = music163Mp3Url.replace("arg_id", songId);
+                    Log.d("IMUSICPLAYER_MP3", searchMp3Url);
+                    try {
+                        URL url = new URL(searchMp3Url);
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("GET");
+                        connection.connect();
+                        int responseCode = connection.getResponseCode();
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            InputStream inputStream = connection.getInputStream();
+                            String result = convertStreamToString(inputStream);
+                            Log.d("IMUSICPLAYER_MP3", result);
+                            JSONObject obj = new JSONObject(result);
+                            final JSONObject songObj = obj.getJSONArray(RESPONSE_DATA_DATA).getJSONObject(0);
+                            // 通过HTTP流媒体从远程URL播放
+                            String mp3Url = songObj.getString(RESPONSE_DATA_URL);
+                            // url可能是null字符串
+                            if (mp3Url != null && !mp3Url.trim().equalsIgnoreCase("null")) {
+                                Log.d("IMUSICPLAYER_MP3_URL", "使用网络资源"+songObj.getString(RESPONSE_DATA_URL));
+                                // 设置MP3url
+                                mSong.setMp3Url(mp3Url);
+                                DetailActivity.this.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // 数据库中不存在才下载
+                                        if (downloadOpenHelper.exist(mSong.getId()) == null) {
+                                            Log.d("IMUSICPLAYER_DOWNLOAD_EXIST", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
+                                            downloadIcon.setVisibility(View.VISIBLE);
+                                        }
+                                    }
+                                });
+                                // 初始化mediaPlayer
+                                mediaPlayer = new MediaPlayer();
+                                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                                mediaPlayer.setDataSource(mp3Url);
+                                mediaPlayer.prepareAsync();
+                                mediaPlayer.setLooping(true);
+                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                    @Override
+                                    public void onPrepared(final MediaPlayer m) {
+                                        // 获取音频时间
+                                        int maxValue = mediaPlayer.getDuration();
+                                        seekBar.setMax(maxValue);
+                                        seekBarMaxValue.setText(encodeTime(maxValue));
+                                        // 更新按钮图片
+                                        playIcon.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+                                        playText.setText("暂停");
+                                        isPlaying = true;
+                                        // 开始播放
+                                        mediaPlayer.start();
+                                        timer = new Timer();
+                                        timer.schedule(new TimerTask() {
+                                            @Override
+                                            public void run() {
+                                                if (mediaPlayer != null) {
+                                                    try {
+                                                        // 调用mediaPlayer.release()后进入到END状态，
+                                                        // mediaPlayer.getCurrentPosition()会出现IllegalStateException
+                                                        seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                                        seekBarCurrentValue.setText(encodeTime(mediaPlayer.getCurrentPosition()));
+                                                    } catch (IllegalStateException e) {
+                                                        Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+                                                    }
                                                 }
                                             }
-                                        }
-                                    },0, 1000);
-                                }
-                            });
+                                        }, 0, 1000);
+                                    }
+                                });
 
-                        }else{
+                            } else {
+                                DetailActivity.this.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(DetailActivity.this, "歌曲文件不存在", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                        } else {
                             DetailActivity.this.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(DetailActivity.this, "歌曲文件不存在", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
-                    }else{
-                        DetailActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                    // 在子线程中跟新UI
+                        // 在子线程中跟新UI
 
-                }catch(Exception e){
-                    Log.d("IMUSICPLAYER_MP3", e.getMessage());
-                    e.printStackTrace();
+                    } catch (Exception e) {
+                        Log.d("IMUSICPLAYER_MP3", e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
     @Override
     protected void onDestroy() {

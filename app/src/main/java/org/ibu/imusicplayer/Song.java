@@ -6,6 +6,7 @@ public class Song {
     private String singer;
     private String epname;
     private String picUrl;
+    private String mp3Url;
 
     public Song(String id, String title, String singer, String epname, String picUrl) {
         this.id = id;
@@ -13,6 +14,23 @@ public class Song {
         this.singer = singer;
         this.epname = epname;
         this.picUrl = picUrl;
+    }
+
+    public Song(String id, String title, String singer, String epname, String picUrl, String mp3Url) {
+        this.id = id;
+        this.title = title;
+        this.singer = singer;
+        this.epname = epname;
+        this.picUrl = picUrl;
+        this.mp3Url = mp3Url;
+    }
+
+    public String getMp3Url() {
+        return mp3Url;
+    }
+
+    public void setMp3Url(String mp3Url) {
+        this.mp3Url = mp3Url;
     }
 
     public String getId() {

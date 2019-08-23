@@ -8,7 +8,15 @@
     tools:context=".CollectActivity">
 
 
-
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:textSize="20dp"
+        android:text="已收藏"
+        android:gravity="center_vertical"
+        android:paddingLeft="15dp"
+        android:textColor="#ffffff"
+        android:background="#f45d5d"/>
     <ListView
         android:id="@+id/collect_song_name_list"
         android:layout_width="match_parent"
