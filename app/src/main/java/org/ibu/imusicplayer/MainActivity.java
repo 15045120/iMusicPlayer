@@ -1,3 +1,18 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer;
 
 import android.content.Context;
@@ -12,7 +27,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -21,31 +35,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.ibu.imusicplayer.Music163Contants.*;
+import static org.ibu.imusicplayer.Music163Constants.*;
 
+/**
+ * 歌曲搜索页面Activity
+ */
 public class MainActivity extends AppCompatActivity {
 
-
-
-    public static String convertStreamToString(InputStream is){
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-        try{
-            while ((line = reader.readLine())!=null){
-                sb.append(line+"\n");
-            }
-        }catch (IOException e){
-            Log.d("SEARCH_ERROR", e.getMessage());
-        }finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
-    }
     ListView songListView;
     LinearLayout loadingBlock;
     LinearLayout menuBlock;
@@ -63,13 +59,14 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        // 初始化搜索输入框
         final EditText songNameInput = findViewById(R.id.song_name_input);
         songNameInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-
-        songListView = findViewById(R.id.song_name_list);
+        // 初始化正在加载图标
         loadingBlock = findViewById(R.id.main_loading_block);
         loadingBlock.setVisibility(View.INVISIBLE);
+        // 初始化ListView
+        songListView = findViewById(R.id.song_name_list);
         // 自定义更多按钮
         menuBlock = findViewById(R.id.menu_block);
         ImageView moreIcon = findViewById(R.id.more_icon);
@@ -83,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        // 点击更多图标中的收藏按钮
         TextView collectButton = findViewById(R.id.menu_collect_text);
         collectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        // 点击更多图标中的关于按钮
         TextView aboutButton = findViewById(R.id.menu_about_text);
         aboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        // 点击更多图标中的分享按钮
         TextView shareButton = findViewById(R.id.menu_share_text);
         shareButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,14 +109,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(Intent.createChooser(textIntent, "分享"));
             }
         });
-        // add send action
+        // 监听输入框按下搜索
         songNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
                 // 按下搜索键
                 if(actionId == EditorInfo.IME_ACTION_SEARCH){
                     if(songNameInput.getText().toString()!= null && !songNameInput.getText().toString().trim().equals("")){
-                        Log.d("IMUSICPLAYER_SEARCH", "click");
+                        Log.d("IMUSICPLAYER_SEARCH", "按下搜索按钮");
                         loadingBlock.setVisibility(View.VISIBLE);
                         final List<String> songIdList = new ArrayList<>();
                         mSongList = new ArrayList<Song>();
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     });
                                 }catch(Exception e){
-                                    Log.d("SEARCH_ERROR", e.getMessage());
+                                    Log.d("IMUSICPLAYER_ERROR", e.getMessage());
                                     e.printStackTrace();
                                 }
                             }
@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-    class SongAdapter extends ArrayAdapter<JSONObject> {
+    class SongAdapter extends ArrayAdapter<Song> {
         private List<Song> songList;
         SongAdapter(Context context, List list){
             super(context,0, list);

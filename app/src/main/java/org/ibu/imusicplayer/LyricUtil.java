@@ -1,3 +1,18 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer;
 
 import android.util.Log;
@@ -5,9 +20,13 @@ import android.util.Log;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class LyricUtil {
+/**
+ * 歌词工具类
+ */
+final class LyricUtil {
     private LyricUtil(){}
 
+    /* 将歌词[00:01.840]括号中的数字转换成毫秒 */
     static int decodeTime(String time){
         Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)\\.([0-9]*)\\]");
         Matcher matcher = pattern.matcher(time);
@@ -20,6 +39,8 @@ public final class LyricUtil {
         }
         return 0;
     }
+
+    /* 将毫秒转换成歌曲进度条数值02:33 */
     static String encodeTime(int time){
         String m1 = "00";
         String m2 = "00";

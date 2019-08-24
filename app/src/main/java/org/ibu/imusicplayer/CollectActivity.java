@@ -1,3 +1,18 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer;
 
 import android.content.Context;
@@ -15,7 +30,9 @@ import android.widget.TextView;
 import java.io.Serializable;
 import java.util.List;
 
-
+/**
+ * 已收藏页面Activity
+ */
 public class CollectActivity extends AppCompatActivity {
     ListView collectSongListView;
     @Override
@@ -23,7 +40,6 @@ public class CollectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collect);
         getSupportActionBar().hide();
-//        this.setTitle("收藏夹");
         collectSongListView = findViewById(R.id.collect_song_name_list);
     }
 
@@ -50,7 +66,7 @@ public class CollectActivity extends AppCompatActivity {
             convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Log.d("IMUSICPLAYER_SEARCH", "click song "+position);
+                    Log.d("IMUSICPLAYER_COLLECT", "click song "+position);
                     Song songObj = songList.get(position);
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
                     intent.putExtra(DetailActivity.DETAIL_CURRENT_SONG, songObj);

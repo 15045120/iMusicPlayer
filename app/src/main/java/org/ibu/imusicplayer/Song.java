@@ -1,15 +1,38 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer;
 
 import java.io.Serializable;
 
+/**
+ * 歌曲实体类
+ */
 public class Song implements Serializable {
-    private String id;
-    private String title;
-    private String singer;
-    private String epname;
-    private String picUrl;
-    private String mp3Url;
+    private String id;      //歌曲ID
+    private String title;   //歌曲标题
+    private String singer;  //歌手名
+    private String epname;  //专辑名
+    private String picUrl;  //专辑封面URL
+    private String mp3Url;  //音频源URL
 
+    /**
+     * 同一个id的歌曲视为同一首歌
+     * @param obj
+     * @return
+     */
     @Override
     public boolean equals(Object obj) {
         return id.equalsIgnoreCase(((Song)obj).id);
