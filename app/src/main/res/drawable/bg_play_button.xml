@@ -1,0 +1,12 @@
+<!--通常用于控件背景色-->
+<!-- android:shape指定形状类型，默认为rectangle , oval为圆形填充-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="oval">
+    <solid android:color="#12000000" />
+    <!--间距-->
+    <padding
+            android:bottom="5dp"
+            android:left="5dp"
+            android:right="5dp"
+            android:top="5dp" />
+</shape>

@@ -15,10 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -52,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     ListView songListView;
     LinearLayout loadingBlock;
     LinearLayout menuBlock;
+
+    List<Song> mSongList;
     @Override
     protected void onStart() {
         super.onStart();
@@ -120,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("IMUSICPLAYER_SEARCH", "click");
                         loadingBlock.setVisibility(View.VISIBLE);
                         final List<String> songIdList = new ArrayList<>();
-                        final List<JSONObject> songList = new ArrayList<>();
+                        mSongList = new ArrayList<Song>();
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -160,7 +159,11 @@ public class MainActivity extends AppCompatActivity {
                                             Log.d("IMUSICPLAYER_ALBUM", mResult);
                                             JSONObject mObj = new JSONObject(mResult);
                                             final JSONObject mSongObj = ((JSONArray) mObj.get(RESPONSE_DATA_SONGS)).getJSONObject(0);
-                                            songList.add(mSongObj);
+                                            String title = mSongObj.getString(RESPONSE_DATA_NAME);
+                                            String singer = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getJSONArray(RESPONSE_DATA_ARTISTS).getJSONObject(0).getString(RESPONSE_DATA_NAME);
+                                            String epname = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_NAME);
+                                            String picUrl = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_PICURL);
+                                            mSongList.add(new Song(songId, title, singer, epname, picUrl));
                                         }
 
                                     }
@@ -168,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                                     MainActivity.this.runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            ArrayAdapter adapter = new SongAdapter(MainActivity.this, songList);
+                                            ArrayAdapter adapter = new SongAdapter(MainActivity.this, mSongList);
                                             songListView.setAdapter(adapter);
                                             loadingBlock.setVisibility(View.GONE);
                                         }
@@ -190,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
     class SongAdapter extends ArrayAdapter<JSONObject> {
-        private List<JSONObject> songList;
+        private List<Song> songList;
         SongAdapter(Context context, List list){
             super(context,0, list);
             songList = list;
@@ -203,38 +206,19 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.d("IMUSICPLAYER_SEARCH", "click song "+position);
-                    JSONObject songObj = songList.get(position);
+                    Song songObj = songList.get(position);
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-                    try{
-                        String songId = Integer.toString(songObj.getInt(RESPONSE_DATA_ID));
-                        String title = songObj.getString(RESPONSE_DATA_NAME);
-                        String singer = songObj.getJSONObject(RESPONSE_DATA_ALBUM).getJSONArray(RESPONSE_DATA_ARTISTS).getJSONObject(0).getString(RESPONSE_DATA_NAME);
-                        String epname = songObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_NAME);
-                        String picUrl = songObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_PICURL);
-                        intent.putExtra(DetailActivity.DETAIL_SONG_ID, songId);
-                        intent.putExtra(DetailActivity.DETAIL_SONG_TITLE, title);
-                        intent.putExtra(DetailActivity.DETAIL_SONG_SINGER, singer);
-                        intent.putExtra(DetailActivity.DETAIL_SONG_EPNAME, epname);
-                        intent.putExtra(DetailActivity.DETAIL_SONG_PICURL, picUrl);
-                        startActivity(intent);
-                    }catch (JSONException e){
-                        e.printStackTrace();
-                    }
+                    intent.putExtra(DetailActivity.DETAIL_CURRENT_SONG, songObj);
+                    intent.putExtra(DetailActivity.DETAIL_SONG_LIST, (Serializable) mSongList);
+                    startActivity(intent);
                 }
             });
-            try {
-                JSONObject songObj = songList.get(position);
-                String title = songObj.getString(RESPONSE_DATA_NAME);
-                String singer = songObj.getJSONObject(RESPONSE_DATA_ALBUM).getJSONArray(RESPONSE_DATA_ARTISTS).getJSONObject(0).getString(RESPONSE_DATA_NAME);
-                String epname = songObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_NAME);
-                TextView titleTextView = convertView.findViewById(R.id.song_item_title);
-                TextView singerEpnameTextView = convertView.findViewById(R.id.song_item_singer_epname);
-                titleTextView.setText(title);
-                singerEpnameTextView.setText(singer+" - "+epname);
-            }catch (JSONException e){
-                Log.d("ALBUM_ERROR", e.getMessage());
-                e.printStackTrace();
-            }
+            // 填充ListView数据
+            Song songObj = songList.get(position);
+            TextView titleTextView = convertView.findViewById(R.id.song_item_title);
+            TextView singerEpnameTextView = convertView.findViewById(R.id.song_item_singer_epname);
+            titleTextView.setText(songObj.getTitle());
+            singerEpnameTextView.setText(songObj.getSinger()+" - "+songObj.getEpname());
             return convertView;
         }
     }

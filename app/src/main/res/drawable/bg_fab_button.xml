@@ -10,10 +10,10 @@
         android:color="#A8A8A8" />
     <!--间距-->
     <padding
-        android:bottom="1dp"
-        android:left="1dp"
-        android:right="1dp"
-        android:top="1dp" />
+        android:bottom="5dp"
+        android:left="5dp"
+        android:right="5dp"
+        android:top="5dp" />
     <!--圆角-->
     <!--<corners android:radius="200dp" />-->
 </shape>

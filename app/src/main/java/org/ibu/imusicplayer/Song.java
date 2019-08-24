@@ -1,12 +1,19 @@
 package org.ibu.imusicplayer;
 
-public class Song {
+import java.io.Serializable;
+
+public class Song implements Serializable {
     private String id;
     private String title;
     private String singer;
     private String epname;
     private String picUrl;
     private String mp3Url;
+
+    @Override
+    public boolean equals(Object obj) {
+        return id.equalsIgnoreCase(((Song)obj).id);
+    }
 
     public Song(String id, String title, String singer, String epname, String picUrl) {
         this.id = id;

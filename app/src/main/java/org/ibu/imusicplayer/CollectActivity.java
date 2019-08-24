@@ -12,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.Serializable;
 import java.util.List;
 
 
@@ -52,27 +53,16 @@ public class CollectActivity extends AppCompatActivity {
                     Log.d("IMUSICPLAYER_SEARCH", "click song "+position);
                     Song songObj = songList.get(position);
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-                    String songId = songObj.getId();
-                    String title = songObj.getTitle();
-                    String singer = songObj.getSinger();
-                    String epname = songObj.getEpname();
-                    String picUrl = songObj.getPicUrl();
-                    intent.putExtra(DetailActivity.DETAIL_SONG_ID, songId);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_TITLE, title);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_SINGER, singer);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_EPNAME, epname);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_PICURL, picUrl);
+                    intent.putExtra(DetailActivity.DETAIL_CURRENT_SONG, songObj);
+                    intent.putExtra(DetailActivity.DETAIL_SONG_LIST, (Serializable) songList);
                     startActivity(intent);
                 }
             });
             Song songObj = songList.get(position);
-            String title = songObj.getTitle();
-            String singer = songObj.getSinger();
-            String epname = songObj.getEpname();
             TextView titleTextView = convertView.findViewById(R.id.collect_song_item_title);
             TextView singerEpnameTextView = convertView.findViewById(R.id.collect_song_item_singer_epname);
-            titleTextView.setText(title);
-            singerEpnameTextView.setText(singer+" - "+epname);
+            titleTextView.setText(songObj.getTitle());
+            singerEpnameTextView.setText(songObj.getSinger()+" - "+songObj.getEpname());
             return convertView;
         }
     }
