@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent textIntent = new Intent(Intent.ACTION_SEND);
                 textIntent.setType("text/plain");
-                textIntent.putExtra(Intent.EXTRA_TEXT, "分享“爱音乐”-https://github.com/15045120/iMusicPlayer/releases/download/1.02/imusicplayer-1.02.apk");
+                textIntent.putExtra(Intent.EXTRA_TEXT, "分享“爱音乐”-https://github.com/15045120/iMusicPlayer");
                 startActivity(Intent.createChooser(textIntent, "分享"));
             }
         });
