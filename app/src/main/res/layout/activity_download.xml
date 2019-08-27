@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".CollectActivity">
+    tools:context=".DownloadActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:background="#f45d5d"
         android:orientation="horizontal">
         <ImageView
-            android:id="@+id/back_for_collect"
+            android:id="@+id/back_for_download"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="15dp"
@@ -22,7 +22,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="已收藏"
+            android:text="已下载"
             android:gravity="center_vertical"
             android:paddingLeft="15dp"
             android:textSize="20dp"
@@ -39,7 +39,7 @@
         <!--android:textColor="#ffffff"-->
         <!--android:background="#f45d5d"/>-->
     <ListView
-        android:id="@+id/collect_song_name_list"
+        android:id="@+id/download_song_name_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         />

@@ -29,7 +29,8 @@ import android.widget.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -86,6 +87,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
+                startActivity(intent);
+            }
+        });
+        // 点击更多图标中的下载按钮
+        TextView downloadButton = findViewById(R.id.menu_download_text);
+        downloadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), DownloadActivity.class);
                 startActivity(intent);
             }
         });

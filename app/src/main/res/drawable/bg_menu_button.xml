@@ -16,5 +16,5 @@
         android:right="1dp"
         android:top="1dp" />
     <!--圆角-->
-    <corners android:radius="10dp" />
+    <corners android:radius="6dp" />
 </shape>

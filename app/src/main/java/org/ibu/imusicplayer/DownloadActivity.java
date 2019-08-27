@@ -34,32 +34,32 @@ import java.util.List;
 /**
  * 已收藏页面Activity
  */
-public class CollectActivity extends AppCompatActivity {
-    ListView collectSongListView;
+public class DownloadActivity extends AppCompatActivity {
+    ListView downloadSongListView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_collect);
+        setContentView(R.layout.activity_download);
         getSupportActionBar().hide();
         // 初始化back button
-        ImageView backIcon = findViewById(R.id.back_for_collect);
+        ImageView backIcon = findViewById(R.id.back_for_download);
         backIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                CollectActivity.this.finish();
+                DownloadActivity.this.finish();
             }
         });
-        collectSongListView = findViewById(R.id.collect_song_name_list);
+        downloadSongListView = findViewById(R.id.download_song_name_list);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         // 查找所有收藏信息
-        CollectOpenHelper dbHelper = new CollectOpenHelper(this);
+        DownloadOpenHelper dbHelper = new DownloadOpenHelper(this);
         List<Song> songList = dbHelper.queryAll();
-        ArrayAdapter adapter = new CollectSongAdapter(CollectActivity.this, songList);
-        collectSongListView.setAdapter(adapter);
+        ArrayAdapter adapter = new CollectSongAdapter(DownloadActivity.this, songList);
+        downloadSongListView.setAdapter(adapter);
     }
 
     class CollectSongAdapter extends ArrayAdapter<Song> {
@@ -70,7 +70,7 @@ public class CollectActivity extends AppCompatActivity {
         }
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.collect_song_name_list, null);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.download_song_name_list, null);
             // add listener to connect
             convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -84,8 +84,8 @@ public class CollectActivity extends AppCompatActivity {
                 }
             });
             Song songObj = songList.get(position);
-            TextView titleTextView = convertView.findViewById(R.id.collect_song_item_title);
-            TextView singerEpnameTextView = convertView.findViewById(R.id.collect_song_item_singer_epname);
+            TextView titleTextView = convertView.findViewById(R.id.download_song_item_title);
+            TextView singerEpnameTextView = convertView.findViewById(R.id.download_song_item_singer_epname);
             titleTextView.setText(songObj.getTitle());
             singerEpnameTextView.setText(songObj.getSinger()+" - "+songObj.getEpname());
             return convertView;

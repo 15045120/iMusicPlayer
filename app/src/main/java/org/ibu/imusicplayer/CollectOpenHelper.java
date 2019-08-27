@@ -22,6 +22,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * 操作收藏表的数据库帮助类
  */

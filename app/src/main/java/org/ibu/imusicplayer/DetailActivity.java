@@ -16,9 +16,11 @@
 package org.ibu.imusicplayer;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -28,7 +30,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.*;
 import org.json.JSONObject;
 
@@ -41,7 +45,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static org.ibu.imusicplayer.DownloadMp3Util.IMUSICPLAYER_DOWNLOAD_DIR;
+import static org.ibu.imusicplayer.DownloadMp3Util.IMUSICPLAYER_MP3_DIR;
 import static org.ibu.imusicplayer.LyricUtil.encodeTime;
 import static org.ibu.imusicplayer.Music163Constants.*;
 
@@ -73,6 +77,8 @@ public class DetailActivity extends AppCompatActivity {
     DownloadOpenHelper downloadOpenHelper;
     /* 是否正在播放 */
     boolean isPlaying = false;
+    /* 歌词播放器 */
+    LyricPlayer lyricPlayer;
     /* 页面视图 */
     TextView songTitleTextView;         // 歌曲标题
     TextView songSingerEpnameTextView;  // 歌手名-专辑名
@@ -105,6 +111,7 @@ public class DetailActivity extends AppCompatActivity {
                     }else{
                         final int i = seekBar.getProgress();
                         mediaPlayer.seekTo(i);
+                        lyricPlayer.seekTo(i);
                         mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
                             @Override
                             public void onSeekComplete(MediaPlayer m) {
@@ -115,6 +122,7 @@ public class DetailActivity extends AppCompatActivity {
                                 }
 
                                 mediaPlayer.start();
+                                lyricPlayer.play();
                                 timer = new Timer();
                                 timer.schedule(new TimerTask() {
                                     @Override
@@ -153,6 +161,37 @@ public class DetailActivity extends AppCompatActivity {
         // 初始化seekBar
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue.setText("0:00");
+        // 从已下载歌词中加载
+        if(downloadOpenHelper.exist(mSong.getId()) != null){
+            searchLyricAndAlbumImageFromStorage();
+        }else {
+           searchLyricAndAlbumImageFromNetwork();
+        }
+
+    }
+    /**
+     * 从本地中加载歌词和专辑封面
+     */
+    void searchLyricAndAlbumImageFromStorage(){
+        DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
+        // 初始化封面
+        InputStream mInputStream = downloadMp3Util.readAlbumImage();
+        final Bitmap bitmap = BitmapFactory.decodeStream(mInputStream);
+        songPicImageView.setImageBitmap(bitmap);
+        // 初始化歌词
+        lyricPlayer = new LyricPlayer(DetailActivity.this, downloadMp3Util.readLyric());
+        songLyricTextView.setText(lyricPlayer.getProcessedLyric());
+
+        initSeekBar();
+        loadingBlock.setVisibility(View.GONE);
+        loadedBlock.setVisibility(View.VISIBLE);
+    }
+
+    String mLyricForDownload;
+    /**
+     * 从网络中加载歌词和专辑封面
+     */
+    void searchLyricAndAlbumImageFromNetwork(){
         // 查找歌词
         new Thread(new Runnable() {
             @Override
@@ -171,6 +210,7 @@ public class DetailActivity extends AppCompatActivity {
                         Log.d("IMUSICPLAYER_LYRIC", result);
                         JSONObject obj = new JSONObject(result);
                         final String lyric = obj.getJSONObject(RESPONSE_DATA_LRC).getString(RESPONSE_DATA_LYRIC);
+                        mLyricForDownload = lyric;
                         // 请求音乐封面
                         URL mUrl = new URL(mSong.getPicUrl());
                         HttpURLConnection mConnection = (HttpURLConnection) mUrl.openConnection();
@@ -191,7 +231,10 @@ public class DetailActivity extends AppCompatActivity {
                         DetailActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                songLyricTextView.setText(lyric);
+                                // 初始化歌词
+                                lyricPlayer = new LyricPlayer(DetailActivity.this, lyric);
+                                songLyricTextView.setText(lyricPlayer.getProcessedLyric());
+
                                 initSeekBar();
                                 loadingBlock.setVisibility(View.GONE);
                                 loadedBlock.setVisibility(View.VISIBLE);
@@ -212,6 +255,7 @@ public class DetailActivity extends AppCompatActivity {
             }
         }).start();
     }
+
     class PlayButtonListener implements View.OnClickListener{
 
         @Override
@@ -225,6 +269,7 @@ public class DetailActivity extends AppCompatActivity {
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
                     isPlaying = true;
                     mediaPlayer.start();
+                    lyricPlayer.play();
                     // 定时任务，每一秒更新一下seekBar
                     timer = new Timer();
                     timer.schedule(new TimerTask() {
@@ -248,6 +293,7 @@ public class DetailActivity extends AppCompatActivity {
                 Log.d("IMUSICPLAYER_MP3","isPlaying=true");
                 if(mediaPlayer != null && mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
+                    lyricPlayer.pause();
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_play_arrow_black_24dp);
                     isPlaying = false;
@@ -271,9 +317,11 @@ public class DetailActivity extends AppCompatActivity {
         songTitleTextView = findViewById(R.id.song_title);
         songSingerEpnameTextView = findViewById(R.id.song_singer_epname);
         // 初始化歌词
-        songLyricTextView = findViewById(R.id.song_lyric);
+        songLyricTextView = findViewById(R.id.song_lyric_text);
         // 使歌词能滚动
         songLyricTextView.setMovementMethod(ScrollingMovementMethod.getInstance());
+
+//        lyricListView = findViewById(R.id.song_lyric_list);
         // 初始化歌曲封面
         songPicImageView = findViewById(R.id.song_pic);
         // 初始化是否收藏
@@ -316,12 +364,13 @@ public class DetailActivity extends AppCompatActivity {
                     ActivityCompat.requestPermissions(DetailActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
                 }else{
+                    Toast.makeText(DetailActivity.this, "正在后台下载歌曲，请耐心等待", Toast.LENGTH_LONG).show();
                     // 下载Mp3文件至本地
                     DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-                    if (downloadMp3Util.downloadToStorage()) {
+                    if (downloadMp3Util.downloadToStorage(mLyricForDownload)) {
                         downloadIcon.setVisibility(View.GONE);
                         downloadOpenHelper.insert(mSong);
-                        Toast.makeText(DetailActivity.this, mSong.getTitle()+".mp3"+"已保存至/storage/emulated/0/iMusicPlayer/download/", Toast.LENGTH_LONG).show();
+                        Toast.makeText(DetailActivity.this, mSong.getSinger()+"-"+mSong.getTitle()+".mp3"+"已保存至"+IMUSICPLAYER_MP3_DIR, Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
                     }
@@ -397,6 +446,14 @@ public class DetailActivity extends AppCompatActivity {
         // 初始化Song和songList
         mSong = (Song) getIntent().getSerializableExtra(DETAIL_CURRENT_SONG);
         mSongList = (ArrayList<Song>) getIntent().getSerializableExtra(DETAIL_SONG_LIST);
+        // 初始化back button
+        ImageView backIcon = findViewById(R.id.back_for_detail);
+        backIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DetailActivity.this.finish();
+            }
+        });
         // 初始化View
         initView();
     }
@@ -410,10 +467,10 @@ public class DetailActivity extends AppCompatActivity {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
                 // 下载Mp3文件至本地
                 DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-                if (downloadMp3Util.downloadToStorage()) {
+                if (downloadMp3Util.downloadToStorage(mLyricForDownload)) {
                     downloadIcon.setVisibility(View.GONE);
                     downloadOpenHelper.insert(mSong);
-                    Toast.makeText(DetailActivity.this, mSong.getTitle()+".mp3"+"已保存至/storage/emulated/0/iMusicPlayer/download/", Toast.LENGTH_LONG).show();
+                    Toast.makeText(DetailActivity.this, mSong.getSinger()+"-"+mSong.getTitle()+".mp3"+"已保存至"+IMUSICPLAYER_MP3_DIR, Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
                 }
@@ -424,17 +481,17 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     /**
-     * 从网络加载音频源
+     * 从本地加载音频源
      */
     void searchMp3UrlFromStorage(){
         try {
             String mp3Url = downloadOpenHelper.exist(mSong.getId()).getMp3Url();
             // 设置MP3url
             mSong.setMp3Url(mp3Url);
-            Log.d("IMUSICPLAYER_MP3_URL", "使用本地资源"+IMUSICPLAYER_DOWNLOAD_DIR + mSong.getTitle() + ".mp3");
+            Log.d("IMUSICPLAYER_MP3_URL", "使用本地资源"+IMUSICPLAYER_MP3_DIR + mSong.getSinger()+"-"+mSong.getTitle() + ".mp3");
             downloadIcon.setVisibility(View.GONE);
             // 初始化mediaPlayer
-            Uri mp3Uri = Uri.fromFile(new File(IMUSICPLAYER_DOWNLOAD_DIR + mSong.getTitle() + ".mp3")); // initialize Uri here
+            Uri mp3Uri = Uri.fromFile(new File(IMUSICPLAYER_MP3_DIR + mSong.getSinger()+"-"+mSong.getTitle() + ".mp3")); // initialize Uri here
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setDataSource(getApplicationContext(), mp3Uri);
@@ -451,6 +508,7 @@ public class DetailActivity extends AppCompatActivity {
                     isPlaying = true;
                     // 开始播放
                     mediaPlayer.start();
+                    lyricPlayer.play();
                     timer = new Timer();
                     timer.schedule(new TimerTask() {
                         @Override
@@ -510,16 +568,6 @@ public class DetailActivity extends AppCompatActivity {
                             Log.d("IMUSICPLAYER_MP3_URL", "使用网络资源"+songObj.getString(RESPONSE_DATA_URL));
                             // 设置MP3url
                             mSong.setMp3Url(mp3Url);
-                            DetailActivity.this.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // 数据库中不存在才下载
-                                    if (downloadOpenHelper.exist(mSong.getId()) == null) {
-                                        Log.d("IMUSICPLAYER_DOWNLOAD_EXIST", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
-                                        downloadIcon.setVisibility(View.VISIBLE);
-                                    }
-                                }
-                            });
                             // 初始化mediaPlayer
                             mediaPlayer = new MediaPlayer();
                             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -528,6 +576,17 @@ public class DetailActivity extends AppCompatActivity {
                             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
                                 public void onPrepared(final MediaPlayer m) {
+                                    // 设置MP3url
+                                    DetailActivity.this.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // 数据库中不存在才下载
+                                            if (downloadOpenHelper.exist(mSong.getId()) == null) {
+                                                Log.d("IMUSICPLAYER_DOWNLOAD", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
+                                                downloadIcon.setVisibility(View.VISIBLE);
+                                            }
+                                        }
+                                    });
                                     // 获取音频时间
                                     int maxValue = mediaPlayer.getDuration();
                                     seekBar.setMax(maxValue);
@@ -538,6 +597,7 @@ public class DetailActivity extends AppCompatActivity {
                                     isPlaying = true;
                                     // 开始播放
                                     mediaPlayer.start();
+                                    lyricPlayer.play();
                                     timer = new Timer();
                                     timer.schedule(new TimerTask() {
                                         @Override
@@ -612,6 +672,7 @@ public class DetailActivity extends AppCompatActivity {
                 timer.purge();
                 timer = null;
             }
+            lyricPlayer.stop();
         }
     }
 }

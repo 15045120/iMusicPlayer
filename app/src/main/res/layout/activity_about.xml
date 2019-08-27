@@ -6,17 +6,29 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".CollectActivity">
-
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="关于"
-        android:gravity="center_vertical"
-        android:paddingLeft="15dp"
-        android:textSize="20dp"
-        android:textColor="#ffffff"
-        android:background="#f45d5d"/>
+        android:layout_height="wrap_content"
+        android:background="#f45d5d"
+        android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/back_for_about"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="15dp"
+            android:src="@drawable/ic_arrow_back_white_24dp"
+            android:layout_gravity="center_vertical"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="关于"
+            android:gravity="center_vertical"
+            android:paddingLeft="15dp"
+            android:textSize="20dp"
+            android:textColor="#ffffff"
+           />
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -34,7 +46,7 @@
             android:layout_height="40dp"
             android:layout_marginTop="10dp"
             android:textColor="#000000"
-            android:text="爱音乐\n版本 1.03"
+            android:text="爱音乐\n版本 1.04"
             android:gravity="center_vertical"
             android:textAlignment="center"/>
     </LinearLayout>

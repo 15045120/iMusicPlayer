@@ -17,6 +17,9 @@ package org.ibu.imusicplayer;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.ImageView;
+
 /**
  * 关于页面Activity
  */
@@ -26,5 +29,13 @@ public class AboutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
         getSupportActionBar().hide();
+        // 初始化back button
+        ImageView backIcon = findViewById(R.id.back_for_about);
+        backIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AboutActivity.this.finish();
+            }
+        });
     }
 }
