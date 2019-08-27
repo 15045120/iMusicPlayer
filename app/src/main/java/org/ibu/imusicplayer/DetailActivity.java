@@ -16,6 +16,8 @@
 package org.ibu.imusicplayer;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -28,6 +30,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -365,15 +368,9 @@ public class DetailActivity extends AppCompatActivity {
                             WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
                 }else{
                     Toast.makeText(DetailActivity.this, "正在后台下载歌曲，请耐心等待", Toast.LENGTH_LONG).show();
-                    // 下载Mp3文件至本地
+                    // 开始下载
                     DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-                    if (downloadMp3Util.downloadToStorage(mLyricForDownload)) {
-                        downloadIcon.setVisibility(View.GONE);
-                        downloadOpenHelper.insert(mSong);
-                        Toast.makeText(DetailActivity.this, mSong.getSinger()+"-"+mSong.getTitle()+".mp3"+"已保存至"+IMUSICPLAYER_MP3_DIR, Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
-                    }
+                    downloadMp3Util.downloadToStorage(mLyricForDownload);
                 }
             }
         });
@@ -385,6 +382,7 @@ public class DetailActivity extends AppCompatActivity {
         previousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 int cursor = mSongList.indexOf(mSong);
                 cursor = (cursor+mSongList.size()-1) % mSongList.size();
                 mSong = null;
@@ -467,13 +465,7 @@ public class DetailActivity extends AppCompatActivity {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
                 // 下载Mp3文件至本地
                 DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-                if (downloadMp3Util.downloadToStorage(mLyricForDownload)) {
-                    downloadIcon.setVisibility(View.GONE);
-                    downloadOpenHelper.insert(mSong);
-                    Toast.makeText(DetailActivity.this, mSong.getSinger()+"-"+mSong.getTitle()+".mp3"+"已保存至"+IMUSICPLAYER_MP3_DIR, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(DetailActivity.this, "歌曲下载失败", Toast.LENGTH_SHORT).show();
-                }
+                downloadMp3Util.downloadToStorage(mLyricForDownload);
             }else{// 授权失败
                 Toast.makeText(DetailActivity.this, "请允许存储权限，下载歌曲", Toast.LENGTH_SHORT).show();
             }
