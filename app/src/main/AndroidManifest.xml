@@ -28,6 +28,8 @@
         </activity>
         <activity android:name=".DownloadActivity">
         </activity>
+        <activity android:name=".RadioActivity">
+        </activity>
     </application>
 
 </manifest>

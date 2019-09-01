@@ -17,6 +17,10 @@ package org.ibu.imusicplayer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -53,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         menuBlock.setVisibility(View.INVISIBLE);
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 隐藏顶部标题
@@ -79,6 +82,15 @@ public class MainActivity extends AppCompatActivity {
                 }else{
                     menuBlock.setVisibility(View.INVISIBLE);
                 }
+            }
+        });
+        // 点击更多图标中的电台按钮
+        TextView radioButton = findViewById(R.id.menu_radio_text);
+        radioButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), RadioActivity.class);
+                startActivity(intent);
             }
         });
         // 点击更多图标中的收藏按钮

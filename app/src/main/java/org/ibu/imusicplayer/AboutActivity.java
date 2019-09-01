@@ -24,7 +24,6 @@ import android.widget.ImageView;
  * 关于页面Activity
  */
 public class AboutActivity extends AppCompatActivity {
-    int DOWNLOAD_MP3_NOTIRY = 10;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
