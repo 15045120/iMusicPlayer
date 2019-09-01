@@ -53,6 +53,7 @@ public class RadioActivity extends AppCompatActivity {
     LinearLayout rootCategoryLayout;
     LinearLayout subCategoryLayout;
     ImageView openCategoryIcon;
+    TextView currentCategoryText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,11 +123,12 @@ public class RadioActivity extends AppCompatActivity {
         categoriesListView.setAdapter(adapter);
         // radioListView
         radioListView = findViewById(R.id.radio_list);
+        // currentCategoryText
+        currentCategoryText = findViewById(R.id.current_category_text);
         // 显示隐藏category
         rootCategoryLayout = findViewById(R.id.menu_radio_category_root_block);
-        subCategoryLayout = findViewById(R.id.menu_radio_category_sub_block);
         rootCategoryLayout.setVisibility(View.GONE);
-        subCategoryLayout.setVisibility(View.GONE);
+        currentCategoryText.setText("中央/全部");
         // openCategoryIcon
         openCategoryIcon = findViewById(R.id.open_category_icon);
         LinearLayout openCategoryLayout = findViewById(R.id.open_category_icon_block);
@@ -135,11 +137,9 @@ public class RadioActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(rootCategoryLayout.getVisibility() == View.VISIBLE){
                     rootCategoryLayout.setVisibility(View.GONE);
-                    subCategoryLayout.setVisibility(View.GONE);
                     openCategoryIcon.setImageResource(R.drawable.ic_down_category);
                 }else{
                     rootCategoryLayout.setVisibility(View.VISIBLE);
-                    subCategoryLayout.setVisibility(View.VISIBLE);
                     openCategoryIcon.setImageResource(R.drawable.ic_up_category);
                 }
             }
@@ -183,7 +183,6 @@ public class RadioActivity extends AppCompatActivity {
                                 ArrayAdapter adapter = new RadioFMAdapter(RadioActivity.this, radioFMList);
                                 radioListView.setAdapter(adapter);
                                 rootCategoryLayout.setVisibility(View.GONE);
-                                subCategoryLayout.setVisibility(View.GONE);
                             }
                         });
                     }
@@ -208,6 +207,13 @@ public class RadioActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     RadioFMCategories radioFMCategoriesObj = categoriesList.get(position);
+                    if(mCategoriesNum == 0){
+                        currentCategoryText.setText("中央/"+radioFMCategoriesObj.getTitle());
+                    }else if(mCategoriesNum == 1){
+                        currentCategoryText.setText("地方/"+radioFMCategoriesObj.getTitle());
+                    }else {
+                        currentCategoryText.setText("网络/"+radioFMCategoriesObj.getTitle());
+                    }
                     searchRadioByCategoriesId(radioFMCategoriesObj.getId());
                 }
             });

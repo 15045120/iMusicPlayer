@@ -46,7 +46,7 @@
             android:layout_height="40dp"
             android:layout_marginTop="10dp"
             android:textColor="#000000"
-            android:text="爱音乐\n版本 1.04"
+            android:text="爱音乐\n版本 1.05"
             android:gravity="center_vertical"
             android:textAlignment="center"/>
     </LinearLayout>
