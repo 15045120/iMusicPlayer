@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.ibu.imusicplayer;
+package org.ibu.imusicplayer.util;
 
 import android.content.Context;
 
 public class DensityUtil {
     Context context;
-    DensityUtil(Context context){
+    public DensityUtil(Context context){
         this.context = context;
     }
 

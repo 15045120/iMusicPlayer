@@ -7,5 +7,9 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-
+    <declare-styleable name="LyricTextView">
+        <attr name="lyric" format="string"/>
+        <attr name="textColor" format="color"/>
+        <attr name="highlightTextColor" format="color"/>
+    </declare-styleable>
 </resources>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.ibu.imusicplayer;
+package org.ibu.imusicplayer.util;
 
 import android.util.Log;
 
@@ -23,11 +23,11 @@ import java.util.regex.Pattern;
 /**
  * 歌词工具类
  */
-final class LyricUtil {
+public final class LyricUtil {
     private LyricUtil(){}
 
     /* 将歌词[00:01.840]括号中的数字转换成毫秒 */
-    static int decodeTime(String time){
+    public static int decodeTime(String time){
         Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)\\.([0-9]*)\\]");
         Matcher matcher = pattern.matcher(time);
         if(matcher.matches()) {
@@ -41,7 +41,7 @@ final class LyricUtil {
     }
 
     /* 将毫秒转换成歌曲进度条数值02:33 */
-    static String encodeTime(int time){
+    public static String encodeTime(int time){
         String m1 = "00";
         String m2 = "00";
         if(time / 60000 != 0){

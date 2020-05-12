@@ -15,6 +15,8 @@
  */
 package org.ibu.imusicplayer;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 
 /**
@@ -26,7 +28,9 @@ public class Song implements Serializable {
     private String singer;  //歌手名
     private String epname;  //专辑名
     private String picUrl;  //专辑封面URL
+    private transient Bitmap bitmap;  //专辑封面
     private String mp3Url;  //音频源URL
+    private String lyric;   //歌词
 
     /**
      * 同一个id的歌曲视为同一首歌
@@ -54,7 +58,15 @@ public class Song implements Serializable {
         this.picUrl = picUrl;
         this.mp3Url = mp3Url;
     }
-
+    public Song(String id, String title, String singer, String epname, String picUrl, String mp3Url, String lyric) {
+        this.id = id;
+        this.title = title;
+        this.singer = singer;
+        this.epname = epname;
+        this.picUrl = picUrl;
+        this.mp3Url = mp3Url;
+        this.lyric = lyric;
+    }
     public String getMp3Url() {
         return mp3Url;
     }
@@ -101,5 +113,21 @@ public class Song implements Serializable {
 
     public void setPicUrl(String picUrl) {
         this.picUrl = picUrl;
+    }
+
+    public String getLyric() {
+        return lyric;
+    }
+
+    public void setLyric(String lyric) {
+        this.lyric = lyric;
+    }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 }

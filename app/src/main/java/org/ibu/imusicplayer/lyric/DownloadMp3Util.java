@@ -13,36 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.ibu.imusicplayer;
+package org.ibu.imusicplayer.lyric;
 
-import android.content.Context;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
+import org.ibu.imusicplayer.EventListeners;
+import org.ibu.imusicplayer.Song;
+import org.ibu.imusicplayer.player.DetailActivity;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.*;
+
+import static org.ibu.imusicplayer.Music163Constants.*;
 
 /**
  * 下载音频文件工具类
  */
 public class DownloadMp3Util {
 
-    final static String IMUSICPLAYER_MP3_DIR = "/storage/emulated/0/iMusicPlayer/source/";
-    final static String IMUSICPLAYER_ALBUM_DIR = "/storage/emulated/0/iMusicPlayer/album/";
-    final static String IMUSICPLAYER_LYRIC_DIR = "/storage/emulated/0/iMusicPlayer/lyric/";
+    public final static String IMUSICPLAYER_MP3_DIR = "/storage/emulated/0/iMusicPlayer/source/";
+    public final static String IMUSICPLAYER_ALBUM_DIR = "/storage/emulated/0/iMusicPlayer/album/";
+    public final static String IMUSICPLAYER_LYRIC_DIR = "/storage/emulated/0/iMusicPlayer/lyric/";
 
     File mMp3Dir;
     File mAlbumDir;
     File mLyricDir;
 
-    Context mContext;
+    Activity mContext;
 
     Song mSong;
-    DownloadMp3Util(Context context, Song song){
+    public DownloadMp3Util(Activity context, Song song){
         mMp3Dir = new File(IMUSICPLAYER_MP3_DIR);
         mAlbumDir = new File(IMUSICPLAYER_ALBUM_DIR);
         mLyricDir = new File(IMUSICPLAYER_LYRIC_DIR);
@@ -60,8 +66,8 @@ public class DownloadMp3Util {
     }
 
     class DownLoadMp3AsyncTask extends AsyncTask<String, Integer, Boolean> {
-        private Context mmContext;
-        DownLoadMp3AsyncTask(Context context){
+        private EventListeners mmContext;
+        DownLoadMp3AsyncTask(EventListeners context){
             mmContext = context;
         }
         /* 下载主要实现方法 */
@@ -107,18 +113,13 @@ public class DownloadMp3Util {
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             DetailActivity activity = (DetailActivity)mmContext;
-            if(result){
-                activity.downloadIcon.setVisibility(View.GONE);
-                activity.downloadOpenHelper.insert(mSong);
-                Toast.makeText(activity, mSong.getSinger()+"-"+mSong.getTitle()+".mp3"+"已保存至"+IMUSICPLAYER_MP3_DIR, Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(activity, "歌曲下载失败", Toast.LENGTH_SHORT).show();
-            }
+            mmContext.onDownloadFinished(mSong);
         }
     }
 
-    public boolean downloadToStorage(String lyric){
+    public boolean download(){
         boolean result = false;
+        String lyric = mSong.getLyric();
         if(mSong.getMp3Url() == null || lyric == null){
             return false;
         }else{
@@ -129,7 +130,7 @@ public class DownloadMp3Util {
                 lyricFOS.write(lyric.getBytes());
                 lyricFOS.flush();
                 lyricFOS.close();
-                DownLoadMp3AsyncTask  downLoadMp3AsyncTask= new DownLoadMp3AsyncTask(mContext);
+                DownLoadMp3AsyncTask  downLoadMp3AsyncTask= new DownLoadMp3AsyncTask((EventListeners)mContext);
                 downLoadMp3AsyncTask.execute(mSong.getMp3Url(), mSong.getPicUrl());
                 result = true;
             }catch(IOException e){
@@ -138,6 +139,66 @@ public class DownloadMp3Util {
             }
             return result;
         }
+    }
+    public void search(){
+        // 查找歌词
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String lyricUrl = music163LyricUrl.replace("arg_id", mSong.getId());
+                Log.d("IMUSICPLAYER_LYRIC", lyricUrl);
+                try{
+                    URL url = new URL(lyricUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.connect();
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        InputStream inputStream = connection.getInputStream();
+                        String result = convertStreamToString(inputStream);
+                        Log.d("IMUSICPLAYER_LYRIC", result);
+                        JSONObject obj = new JSONObject(result);
+                        String tempLyric = "";
+                        try {
+                            tempLyric = obj.getJSONObject(RESPONSE_DATA_LRC).getString(RESPONSE_DATA_LYRIC);
+                        }catch (JSONException e){
+                            Log.d("SEARCH_ERROR", e.getMessage());
+                            e.printStackTrace();
+                        }
+                        final String lyric = tempLyric;
+//                        LyricPlayer lyricPlayer = new LyricPlayer(mContext, lyric);
+                        mSong.setLyric(lyric);
+                        // 请求音乐封面
+                        URL mUrl = new URL(mSong.getPicUrl());
+                        HttpURLConnection mConnection = (HttpURLConnection) mUrl.openConnection();
+                        mConnection.setRequestMethod("GET");
+                        mConnection.connect();
+                        int mResponseCode = mConnection.getResponseCode();
+                        if (mResponseCode == HttpURLConnection.HTTP_OK) {
+                            InputStream mInputStream = mConnection.getInputStream();
+                            final Bitmap bitmap = BitmapFactory.decodeStream(mInputStream);
+                            mSong.setBitmap(bitmap);
+                            mContext.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((EventListeners)mContext).onSearchFinished(mSong);
+                                }
+                            });
+                        }
+                    }else{
+//                        DetailActivity.this.runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(DetailActivity.this, "歌曲文件不存在",Toast.LENGTH_SHORT).show();
+//                            }
+//                        });
+                    }
+                }catch(Exception e){
+                    Log.d("SEARCH_ERROR", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public InputStream readAlbumImage(){

@@ -27,6 +27,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import org.ibu.imusicplayer.dao.CollectOpenHelper;
+import org.ibu.imusicplayer.player.DetailActivity;
 
 import java.io.Serializable;
 import java.util.List;

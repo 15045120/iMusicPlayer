@@ -17,10 +17,6 @@ package org.ibu.imusicplayer;
 
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -30,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
+import org.ibu.imusicplayer.player.DetailActivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -55,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        menuBlock.setVisibility(View.INVISIBLE);
+//        menuBlock.setVisibility(View.INVISIBLE);
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,66 +68,57 @@ public class MainActivity extends AppCompatActivity {
         loadingBlock.setVisibility(View.INVISIBLE);
         // 初始化ListView
         songListView = findViewById(R.id.song_name_list);
-        // 自定义更多按钮
-        menuBlock = findViewById(R.id.menu_block);
-        ImageView moreIcon = findViewById(R.id.more_icon);
-        moreIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(menuBlock.getVisibility() == View.INVISIBLE){
-                    menuBlock.setVisibility(View.VISIBLE);
-                }else{
-                    menuBlock.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-        // 点击更多图标中的电台按钮
-        TextView radioButton = findViewById(R.id.menu_radio_text);
-        radioButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), RadioActivity.class);
-                startActivity(intent);
-            }
-        });
-        // 点击更多图标中的收藏按钮
-        TextView collectButton = findViewById(R.id.menu_collect_text);
-        collectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
-                startActivity(intent);
-            }
-        });
-        // 点击更多图标中的下载按钮
-        TextView downloadButton = findViewById(R.id.menu_download_text);
-        downloadButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), DownloadActivity.class);
-                startActivity(intent);
-            }
-        });
-        // 点击更多图标中的关于按钮
-        TextView aboutButton = findViewById(R.id.menu_about_text);
-        aboutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), AboutActivity.class);
-                startActivity(intent);
-            }
-        });
-        // 点击更多图标中的分享按钮
-        TextView shareButton = findViewById(R.id.menu_share_text);
-        shareButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent textIntent = new Intent(Intent.ACTION_SEND);
-                textIntent.setType("text/plain");
-                textIntent.putExtra(Intent.EXTRA_TEXT, "分享“爱音乐”-https://github.com/15045120/iMusicPlayer");
-                startActivity(Intent.createChooser(textIntent, "分享"));
-            }
-        });
+//        // 自定义更多按钮
+//        menuBlock = findViewById(R.id.menu_block);
+//        ImageView moreIcon = findViewById(R.id.more_icon);
+//        moreIcon.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if(menuBlock.getVisibility() == View.INVISIBLE){
+//                    menuBlock.setVisibility(View.VISIBLE);
+//                }else{
+//                    menuBlock.setVisibility(View.INVISIBLE);
+//                }
+//            }
+//        });
+//        // 点击更多图标中的收藏按钮
+//        TextView collectButton = findViewById(R.id.menu_collect_text);
+//        collectButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
+//                startActivity(intent);
+//            }
+//        });
+//        // 点击更多图标中的下载按钮
+//        TextView downloadButton = findViewById(R.id.menu_download_text);
+//        downloadButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getApplicationContext(), DownloadActivity.class);
+//                startActivity(intent);
+//            }
+//        });
+//        // 点击更多图标中的关于按钮
+//        TextView aboutButton = findViewById(R.id.menu_about_text);
+//        aboutButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getApplicationContext(), AboutActivity.class);
+//                startActivity(intent);
+//            }
+//        });
+//        // 点击更多图标中的分享按钮
+//        TextView shareButton = findViewById(R.id.menu_share_text);
+//        shareButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent textIntent = new Intent(Intent.ACTION_SEND);
+//                textIntent.setType("text/plain");
+//                textIntent.putExtra(Intent.EXTRA_TEXT, "分享“爱音乐”-https://github.com/15045120/iMusicPlayer");
+//                startActivity(Intent.createChooser(textIntent, "分享"));
+//            }
+//        });
         // 监听输入框按下搜索
         songNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
