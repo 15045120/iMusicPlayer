@@ -28,12 +28,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import org.ibu.imusicplayer.MainActivity;
 import org.ibu.imusicplayer.R;
+import org.ibu.imusicplayer.dao.OpenHelperFactory;
 import org.ibu.imusicplayer.lyric.DownloadMp3Util;
 import org.ibu.imusicplayer.EventListeners;
 import org.ibu.imusicplayer.Song;
 import org.ibu.imusicplayer.dao.CollectOpenHelper;
 import org.ibu.imusicplayer.dao.DownloadOpenHelper;
+import org.ibu.imusicplayer.lyric.LocalMp3Util;
 import org.ibu.imusicplayer.lyric.LyricPlayer;
 import org.json.JSONObject;
 
@@ -54,6 +57,8 @@ import static org.ibu.imusicplayer.Music163Constants.*;
  * 歌曲详情和播放页面Activity
  */
 public class DetailActivity extends AppCompatActivity implements EventListeners {
+    private static final String TAG = "DetailActivity";
+
     /* Activity传入参数 */
     public final static String DETAIL_CURRENT_SONG = "currentSong";
     public final static String DETAIL_SONG_LIST = "songList";
@@ -104,6 +109,8 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     String[] playModeToasts = new String[]{"顺序播放",
             "单曲循环",
             "随机播放"};
+
+    String dbType;
     /**
      * 初始化seekBar
      * 问题：使用正则表达式提取歌词最后一个时间（这里不准确）
@@ -177,10 +184,16 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue.setText("0:00");
 
-        DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-        downloadMp3Util.search();
+        if (dbType.equals(OpenHelperFactory.DB_TYPE_NETWORK)){
+            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
+            downloadMp3Util.search();
+        }else{
+            LocalMp3Util localMp3Util = new LocalMp3Util(DetailActivity.this, mSong);
+            localMp3Util.search();
+        }
 
-//        // 从已下载歌词中加载
+
+////        // 从已下载歌词中加载
 //        if(downloadOpenHelper.exist(mSong.getId()) != null){
 //            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(this, mSong);
 //            // 初始化封面
@@ -281,6 +294,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     View.OnClickListener nextButtonListener;
 
     void changeFragment(){
+        Log.d(TAG, "changeFragment");
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.hide(fragments[fragmentCount % 2]);
         fragmentCount += 1;
@@ -291,6 +305,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 初始化视图
      */
     void initView(){
+        Log.d(TAG, "initView");
         // 初始化 fragment
         Bundle bundle1 = new Bundle();
         bundle1.putSerializable("song", mSong);
@@ -408,6 +423,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         // 隐藏顶部标题
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
@@ -418,6 +434,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         loadedBlock.setVisibility(View.INVISIBLE);
         downloadOpenHelper = new DownloadOpenHelper(this);
         // 初始化Song和songList
+        dbType = getIntent().getStringExtra(MainActivity.DB_TYPE);
         mSong = (Song) getIntent().getSerializableExtra(DETAIL_CURRENT_SONG);
         mSongList = (ArrayList<Song>) getIntent().getSerializableExtra(DETAIL_SONG_LIST);
         // 初始化back button
@@ -459,14 +476,13 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 从本地加载音频源
      */
     void searchMp3UrlFromStorage(){
+        Log.d(TAG, "searchMp3UrlFromStorage");
         try {
-            String mp3Url = downloadOpenHelper.exist(mSong.getId()).getMp3Url();
-            // 设置MP3url
-            mSong.setMp3Url(mp3Url);
-            Log.d("IMUSICPLAYER_MP3_URL", "使用本地资源"+IMUSICPLAYER_MP3_DIR + mSong.getSinger()+"-"+mSong.getTitle() + ".mp3");
+            String mp3Url = mSong.getMp3Url();
+            Log.d(TAG, "使用本地资源"+mp3Url);
 //            downloadIcon.setVisibility(View.GONE);
             // 初始化mediaPlayer
-            Uri mp3Uri = Uri.fromFile(new File(IMUSICPLAYER_MP3_DIR + mSong.getSinger()+"-"+mSong.getTitle() + ".mp3")); // initialize Uri here
+            Uri mp3Uri = Uri.fromFile(new File(mp3Url)); // initialize Uri here
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setDataSource(getApplicationContext(), mp3Uri);
@@ -643,9 +659,9 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 加载音频源
      */
     void searchMp3Url(){
-        if(downloadOpenHelper.exist(mSong.getId()) != null){
+        if(dbType.equals(OpenHelperFactory.DB_TYPE_LOCAL)){
             searchMp3UrlFromStorage();
-        }else {
+        }else if(dbType.equals(OpenHelperFactory.DB_TYPE_NETWORK)) {
             searchMp3UrlFromNetwork();
         }
     }

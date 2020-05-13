@@ -26,7 +26,7 @@ import org.ibu.imusicplayer.lyric.LyricTextView;
 
 
 public class LyricFragment extends SimpleFragment {
-    private static final String TAG = "ArtworkFragment";
+    private static final String TAG = "LyricFragment";
     LyricTextView songLyricTextView; // 歌词
 
     @Override

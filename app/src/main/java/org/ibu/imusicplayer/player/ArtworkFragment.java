@@ -2,7 +2,10 @@ package org.ibu.imusicplayer.player;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +24,7 @@ import org.ibu.imusicplayer.dao.DownloadOpenHelper;
 
 public class ArtworkFragment extends SimpleFragment {
     private static final String TAG = "ArtworkFragment";
+
     ImageView songPicImageView;         // 专辑封面
 //    ImageView collectIcon;              // 收藏按钮
 //    ImageView downloadIcon;             // 下载按钮
@@ -94,6 +98,12 @@ public class ArtworkFragment extends SimpleFragment {
         return view;
     }
 
+    @Override
+    public void onAttach(Context context) {
+        Log.d(TAG, "onAttach");
+        super.onAttach(context);
+    }
+
     void download(){
 //        if(downloadOpenHelper.exist(mSong.getId()) == null) {
 //            Toast.makeText(detailActivity, "正在后台下载歌曲，请耐心等待", Toast.LENGTH_LONG).show();
@@ -109,6 +119,11 @@ public class ArtworkFragment extends SimpleFragment {
     void update(Bundle bundle) {
         Log.d(TAG, "update");
         mSong = (Song) bundle.get("song");
+//        if(mSong.getBitmap() == null){
+//            Bitmap bitmap = BitmapFactory.decodeStream(getClass().getResourceAsStream("/res/drawable/ic_launcher.png"));
+//            Bitmap bitmap =  BitmapFactory.decodeResource(detailActivity.getApplicationContext().getResources(), R.mipmap.ic_launcher);
+//            mSong.setBitmap(bitmap);
+//        }
         songPicImageView.setImageBitmap(mSong.getBitmap());
 //        // 初始化是否收藏
 //        if(dbHelper.exist(mSong.getId()) == null) {

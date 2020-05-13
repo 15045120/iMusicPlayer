@@ -68,6 +68,10 @@ public class LyricPlayer {
 
     private void initLines(){
         lineList = new ArrayList<>();
+        if(lyric== null || lyric.equals("")){
+            lineList.add(new Line(0, "歌词不存在"));
+            return;
+        }
         String[] lines = this.lyric.split("\n");
         for (String line: lines) {
             Pattern pattern = Pattern.compile("\\[([0-9]*):([0-9]*)\\.([0-9]*)\\](.+?)");
@@ -108,38 +112,6 @@ public class LyricPlayer {
     void setCurNum(int num){
         this.curNum = num;
     }
-//    public void play(){
-//        Log.d(TAG, "start play...");
-//        isPlaying = true;
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while(isPlaying && curNum < lineList.size()-1) {
-//                    curNum ++;
-//                    Log.d(TAG, lineList.get(curNum).time+":"+lineList.get(curNum).txt);
-//                    mOnLyricChangedListener.OnLyricChanged();
-////                try {
-//
-////                        handler.post(new Runnable() {
-////                            @Override
-////                            public void run() {
-////                                if(curNum >= 3){
-////                                    ScrollView scrollView = ((DetailActivity)context).findViewById(R.id.song_lyric_scroll);
-////                                    scrollView.scrollTo(0,densityUtil.dp2px(30*(curNum-3)));
-////                                }
-////                            }
-////                        });
-//                    // 延时
-////                        int previousTime = lineList.get(curNum).time;
-////                        int nextTime = lineList.get(curNum + 1).time;
-////                        Thread.sleep(nextTime - previousTime);
-//
-//                } catch (InterruptedException e) {
-//
-//                }
-//            }
-//        }).start();
-//    }
 
     public void pause() {
         isPlaying = false;

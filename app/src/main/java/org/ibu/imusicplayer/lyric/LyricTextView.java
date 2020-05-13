@@ -222,7 +222,19 @@ public class LyricTextView extends ScrollView {
             textPaint.setTextSize(50);
 
             textPaint.setColor(mTextColor);
-            List<String> tempLyric = parseLyric(mLyricPlayer.getProcessedLyricList(),mLyricPlayer.getCurNum() );
+            List<String> tempLyric;
+            if (mLyricPlayer.getProcessedLyricList().size() == 1){
+               tempLyric = new ArrayList<>();
+                tempLyric.add("");
+                tempLyric.add("");
+                tempLyric.add("");
+                tempLyric.add("歌词不存在");
+                tempLyric.add("");
+                tempLyric.add("");
+                tempLyric.add("");
+            }else {
+                tempLyric = parseLyric(mLyricPlayer.getProcessedLyricList(), mLyricPlayer.getCurNum());
+            }
             for (int i = 0; i < tempLyric.size(); i++) {
                 textPaint.setColor(i==3 ? mHighlightTextColor: mTextColor);
                 mCanvas.drawText(tempLyric.get(i), mStartX, (i+1)*mTextHeight, textPaint);
