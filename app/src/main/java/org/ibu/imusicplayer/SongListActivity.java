@@ -35,7 +35,7 @@ public class SongListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_songlist);
 
         Bundle bundle = getIntent().getExtras();
-        dbType = bundle.getString(MainActivity.DB_TYPE);
+        dbType = bundle.getString(BundleConstants.DB_TYPE);
         initView();
     }
     void initView(){
@@ -64,10 +64,10 @@ public class SongListActivity extends AppCompatActivity {
     }
 
     class SongAdapter extends ArrayAdapter<Song> {
-        private List<Song> songList;
+        private List<Song> mSongList;
         SongAdapter(Context context, List list){
             super(context,0, list);
-            songList = list;
+            mSongList = list;
         }
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
@@ -77,15 +77,15 @@ public class SongListActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.d(TAG, "click song "+position);
-                    Song songObj = songList.get(position);
+                    Song songObj = mSongList.get(position);
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-                    intent.putExtra(MainActivity.DB_TYPE, OpenHelperFactory.DB_TYPE_LOCAL);
-                    intent.putExtra(DetailActivity.DETAIL_CURRENT_SONG, songObj);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_LIST, (Serializable) songList);
+                    intent.putExtra(BundleConstants.DB_TYPE, dbType);
+                    intent.putExtra(BundleConstants.DETAIL_CURRENT_SONG, songObj);
+                    intent.putExtra(BundleConstants.DETAIL_SONG_LIST, (Serializable) mSongList);
                     startActivity(intent);
                 }
             });
-            Song songObj = songList.get(position);
+            Song songObj = mSongList.get(position);
             TextView titleTextView = convertView.findViewById(R.id.song_item_title);
             TextView singerEpnameTextView = convertView.findViewById(R.id.song_item_singer_epname);
             titleTextView.setText(songObj.getTitle());

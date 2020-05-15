@@ -27,16 +27,16 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.*;
-import org.ibu.imusicplayer.MainActivity;
-import org.ibu.imusicplayer.R;
+import org.ibu.imusicplayer.*;
+import org.ibu.imusicplayer.dao.BaseOpenHelper;
 import org.ibu.imusicplayer.dao.OpenHelperFactory;
 import org.ibu.imusicplayer.lyric.DownloadMp3Util;
-import org.ibu.imusicplayer.EventListeners;
-import org.ibu.imusicplayer.Song;
 import org.ibu.imusicplayer.dao.CollectOpenHelper;
 import org.ibu.imusicplayer.dao.DownloadOpenHelper;
-import org.ibu.imusicplayer.lyric.LocalMp3Util;
 import org.ibu.imusicplayer.lyric.LyricPlayer;
 import org.json.JSONObject;
 
@@ -59,10 +59,6 @@ import static org.ibu.imusicplayer.Music163Constants.*;
 public class DetailActivity extends AppCompatActivity implements EventListeners {
     private static final String TAG = "DetailActivity";
 
-    /* Activity传入参数 */
-    public final static String DETAIL_CURRENT_SONG = "currentSong";
-    public final static String DETAIL_SONG_LIST = "songList";
-    /* Activity传入参数接收器 */
     Song mSong;
     List<Song> mSongList;
     /* 歌词播放器 */
@@ -82,7 +78,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 2;
     /* 数据库操作帮助类*/
     CollectOpenHelper dbHelper;
-    DownloadOpenHelper downloadOpenHelper;
+    BaseOpenHelper downloadOpenHelper;
     /* 是否正在播放 */
     boolean isPlaying = false;
     /* 页面视图 */
@@ -118,6 +114,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      *       maxValue = decodeTime(lastTime);
      */
     void initSeekBar(){
+        Log.d(TAG, "initSeekBar");
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             // todo 监听滑动条滑动事件不要重写这个方法，因为调用setProgress时也会调用这个方法
             @Override
@@ -177,6 +174,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 初始化视图内容
      */
     void initViewContent(){
+        Log.d(TAG, "initViewContent");
         // 初始化歌曲名信息
         songTitleTextView.setText(mSong.getTitle());
         songSingerEpnameTextView.setText(mSong.getSinger()+" - "+mSong.getEpname());
@@ -184,33 +182,50 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue.setText("0:00");
 
-        if (dbType.equals(OpenHelperFactory.DB_TYPE_NETWORK)){
+        if (dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK)){
             DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
             downloadMp3Util.search();
+        }else if(downloadOpenHelper.exist(mSong.getId()) != null){
+            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(this, mSong);
+            // 初始化封面
+            InputStream mInputStream = downloadMp3Util.readAlbumImage();
+            final Bitmap bitmap = BitmapFactory.decodeStream(mInputStream);
+            mSong.setBitmap(bitmap);
+            // 初始化歌词
+            mSong.setLyric(downloadMp3Util.readLyric());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Bitmap bitmap = BitmapFactory.decodeStream(getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png"));
+                    mSong.setBitmap(bitmap);
+                    DetailActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((EventListeners)DetailActivity.this).onSearchFinished(mSong);
+                        }
+                    });
+                }
+            }).start();
         }else{
-            LocalMp3Util localMp3Util = new LocalMp3Util(DetailActivity.this, mSong);
-            localMp3Util.search();
+            Bitmap bitmap = BitmapFactory.decodeStream(getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png"));
+            mSong.setBitmap(bitmap);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DetailActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((EventListeners)DetailActivity.this).onSearchFinished(mSong);
+                        }
+                    });
+                }
+            }).start();
         }
-
-
-////        // 从已下载歌词中加载
-//        if(downloadOpenHelper.exist(mSong.getId()) != null){
-//            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(this, mSong);
-//            // 初始化封面
-//            InputStream mInputStream = downloadMp3Util.readAlbumImage();
-//            final Bitmap bitmap = BitmapFactory.decodeStream(mInputStream);
-//            mSong.setBitmap(bitmap);
-//            // 初始化歌词
-//            mSong.setLyric(downloadMp3Util.readLyric());
-//            onSearchFinished(mSong);
-//        }else {
-//            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-//            downloadMp3Util.search();
-//        }
     }
 
     @Override
     public void onSearchFinished(Song song) {
+        Log.d(TAG, "onSearchFinished");
         Bundle bundle = new Bundle();
         bundle.putSerializable("song", song);
 
@@ -227,6 +242,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 
     @Override
     public void onDownloadFinished(Song song) {
+        downloadOpenHelper.insert(song);
         Bundle bundle = new Bundle();
         bundle.putSerializable("song", song);
         bundle.putBoolean("downloaded", true);
@@ -241,14 +257,16 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         public void onClick(View v) {
             // 显示播放按钮
             if(!isPlaying){
-                Log.d("IMUSICPLAYER_MP3","isPlaying=false");
+                Log.d(TAG,"isPlaying=false");
                 //暂停转为播放状态
                 if(mediaPlayer!=null){
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
-                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
+                    
+                    ((ArtworkFragment)artworkFragment).updateDownloadIcon();
                     isPlaying = true;
                     mediaPlayer.start();
+                    ((ArtworkFragment)artworkFragment).startRotateArtwork();
                     // 定时任务，每一秒更新一下seekBar
                     timer = new Timer();
                     timer.schedule(new TimerTask() {
@@ -279,6 +297,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                 if(mediaPlayer != null && mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
                     lyricFragment.songLyricTextView.pause();
+                    ((ArtworkFragment)artworkFragment).stopRotateArtwork();
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_play_arrow_black_24dp);
                     isPlaying = false;
@@ -342,7 +361,8 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         seekBarCurrentValue = findViewById(R.id.song_seekbar_current_value);
         seekBarMaxValue = findViewById(R.id.song_seekbar_max_value);
         // 初始化下载按钮
-        downloadOpenHelper = new DownloadOpenHelper(this);
+        downloadOpenHelper = OpenHelperFactory.getOpenHelper(this,
+                                OpenHelperFactory.DB_TYPE.DB_TYPE_DOWNLOAD);
         // 初始化播放暂停按钮
         playIcon = findViewById(R.id.play_icon);
         // 初始化视图内容
@@ -435,9 +455,9 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         loadedBlock.setVisibility(View.INVISIBLE);
         downloadOpenHelper = new DownloadOpenHelper(this);
         // 初始化Song和songList
-        dbType = getIntent().getStringExtra(MainActivity.DB_TYPE);
-        mSong = (Song) getIntent().getSerializableExtra(DETAIL_CURRENT_SONG);
-        mSongList = (ArrayList<Song>) getIntent().getSerializableExtra(DETAIL_SONG_LIST);
+        dbType = getIntent().getStringExtra(BundleConstants.DB_TYPE);
+        mSong = (Song) getIntent().getSerializableExtra(BundleConstants.DETAIL_CURRENT_SONG);
+        mSongList = (ArrayList<Song>) getIntent().getSerializableExtra(BundleConstants.DETAIL_SONG_LIST);
         // 初始化back button
         ImageView backIcon = findViewById(R.id.back_for_detail);
         backIcon.setOnClickListener(new View.OnClickListener() {
@@ -468,7 +488,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                 // 下载Mp3文件至本地
                 ((ArtworkFragment)artworkFragment).download();
             }else{// 授权失败
-                Toast.makeText(DetailActivity.this, "请允许存储权限，下载歌曲", Toast.LENGTH_SHORT).show();
+                Toast.makeText(DetailActivity.this, "请允许存储权限", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -497,11 +517,10 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     seekBarMaxValue.setText(encodeTime(maxValue));
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
-                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
                     isPlaying = true;
                     // 开始播放
                     mediaPlayer.start();
-//                    lyricFragment.songLyricTextView.seekTo(mediaPlayer.getCurrentPosition());
+                    ((ArtworkFragment)artworkFragment).startRotateArtwork();
                     timer = new Timer();
                     timer.schedule(new TimerTask() {
                         @Override
@@ -582,7 +601,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                             // 数据库中不存在才下载
                                             if (downloadOpenHelper.exist(mSong.getId()) == null) {
                                                 Log.d("IMUSICPLAYER_DOWNLOAD", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
-                                                ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
+                                                ((ArtworkFragment)artworkFragment).updateDownloadIcon();
                                             }
                                         }
                                     });
@@ -592,12 +611,11 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                     seekBarMaxValue.setText(encodeTime(maxValue));
                                     // 更新按钮图片
                                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
-                                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
-//                                        playText.setText("暂停");
+                                    ((ArtworkFragment)artworkFragment).updateDownloadIcon();
                                     isPlaying = true;
                                     // 开始播放
                                     mediaPlayer.start();
-                                    //lyricFragment.songLyricTextView.seekTo(mediaPlayer.getCurrentPosition());
+                                    ((ArtworkFragment)artworkFragment).startRotateArtwork();
                                     timer = new Timer();
                                     timer.schedule(new TimerTask() {
                                         @Override
@@ -662,9 +680,9 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 加载音频源
      */
     void searchMp3Url(){
-        if(dbType.equals(OpenHelperFactory.DB_TYPE_LOCAL)){
+        if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL)){
             searchMp3UrlFromStorage();
-        }else if(dbType.equals(OpenHelperFactory.DB_TYPE_NETWORK)) {
+        }else if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK)) {
             searchMp3UrlFromNetwork();
         }
     }

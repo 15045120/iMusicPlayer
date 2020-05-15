@@ -84,30 +84,7 @@ public class LyricTextView extends ScrollView {
         mLyricPlayer = new LyricPlayer(context, mLyric);
         a.recycle();
     }
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        //setMeasuredDimension(widthMeasureSpec, getDefaultHeight(heightMeasureSpec));
-    }
 
-    private int getDefaultHeight(int heightMeasureSpec) {
-        int result = 350;
-        int specMode = MeasureSpec.getMode(heightMeasureSpec);
-        int specSize = MeasureSpec.getSize(heightMeasureSpec);
-
-        switch (specMode) {
-            case MeasureSpec.UNSPECIFIED:
-                result = 350;// wrap_content
-                break;
-            case MeasureSpec.AT_MOST:
-                result = 350;// match_parent
-                break;
-            case MeasureSpec.EXACTLY:
-                result = 350;// has extract value
-                break;
-        }
-        return result;
-    }
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

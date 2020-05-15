@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 public class LyricPlayer {
     private static final String TAG = "LyricPlayer";
+    public static final String NO_LYRIC =  "[00:00.00]歌词不存在";
     class Line{
         int time;
         String txt;
@@ -53,7 +54,12 @@ public class LyricPlayer {
 
     DensityUtil densityUtil;
     public LyricPlayer(String lyric){
-        this.lyric = lyric;
+        if(lyric== null || lyric.equals("")){
+            this.lyric = NO_LYRIC;
+        }else{
+            this.lyric = lyric;
+        }
+
         this.handler = new Handler();
         densityUtil = new DensityUtil(context);
         initLines();
@@ -140,9 +146,7 @@ public class LyricPlayer {
         }
         mOnLyricChangedListener.OnLyricChanged();
     }
-    /**
-     *
-     */
+
     public void setLyricChangedListener(OnLyricChangedListener l){
         mOnLyricChangedListener = l;
     }

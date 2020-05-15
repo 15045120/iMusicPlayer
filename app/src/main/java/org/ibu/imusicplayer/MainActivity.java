@@ -44,26 +44,21 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.ibu.imusicplayer.Music163Constants.*;
-
 /**
  * 歌曲搜索页面Activity
  */
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
-    public static final String DB_TYPE = "dbType";
-
     ListView songListView;
-    LinearLayout loadingBlock;
-    LinearLayout menuBlock;
 
     List<Song> mSongList;
 
-    int READ_EXTERNAL_STORAGE_REQUEST_CODE = 1;
-    int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 2;
+    int READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
+
     @Override
     protected void onStart() {
+        Log.d(TAG, "onStart");
         super.onStart();
     }
     /**
@@ -71,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if(requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE){
+        if(requestCode == READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE){
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
                 toSongListActivity();
             }else{// 授权失败
@@ -83,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "toSongListActivity");
         Intent intent = new Intent(getApplicationContext(), SongListActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putString(DB_TYPE, OpenHelperFactory.DB_TYPE_LOCAL);
+        bundle.putString(BundleConstants.DB_TYPE, OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL);
         intent.putExtras(bundle);
         startActivity(intent);
     }
@@ -94,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             //申请READ_EXTERNAL_STORAGE权限
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    READ_EXTERNAL_STORAGE_REQUEST_CODE);
+                    READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
         }else{
             toSongListActivity();
         }
@@ -115,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         final EditText songNameInput = findViewById(R.id.song_name_input);
         songNameInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
         // 初始化正在加载图标
-        loadingBlock = findViewById(R.id.main_loading_block);
+        final LinearLayout loadingBlock = findViewById(R.id.main_loading_block);
         loadingBlock.setVisibility(View.INVISIBLE);
         // 初始化ListView
         songListView = findViewById(R.id.song_name_list);
@@ -142,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 // 搜索歌曲
-                                String searchUrl = music163SearchUrl.replace("arg_s", songNameInput.getText());
+                                String searchUrl = Music163Constants.music163SearchUrl.replace("arg_s", songNameInput.getText());
                                 Log.d(TAG, searchUrl);
                                 try{
                                     URL url = new URL(searchUrl);
@@ -152,10 +147,10 @@ public class MainActivity extends AppCompatActivity {
                                     int responseCode = connection.getResponseCode();
                                     if (responseCode == HttpURLConnection.HTTP_OK) {
                                         InputStream inputStream = connection.getInputStream();
-                                        String result = convertStreamToString(inputStream);
+                                        String result =  Music163Constants.convertStreamToString(inputStream);
                                         Log.d(TAG, result);
                                         JSONObject obj = new JSONObject(result);
-                                        JSONArray songArray = (JSONArray) ((JSONObject)obj.get(RESPONSE_DATA_RESULT)).get(RESPONSE_DATA_SONGS);
+                                        JSONArray songArray = (JSONArray) ((JSONObject)obj.get(Music163Constants.RESPONSE_DATA_RESULT)).get(Music163Constants.RESPONSE_DATA_SONGS);
                                         Log.d(TAG, songArray.toString());
 
                                         for (int i = 0; i < songArray.length(); i++) {
@@ -164,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     // 查找歌曲专辑
                                     for (String songId: songIdList) {
-                                        String albumUrl = music163AlbumUrl.replace("arg_id", songId);
+                                        String albumUrl = Music163Constants.music163AlbumUrl.replace("arg_id", songId);
                                         Log.d(TAG, albumUrl);
                                         URL mUrl = new URL(albumUrl);
                                         HttpURLConnection mConnection = (HttpURLConnection) mUrl.openConnection();
@@ -173,14 +168,14 @@ public class MainActivity extends AppCompatActivity {
                                         int mResponseCode = mConnection.getResponseCode();
                                         if (mResponseCode == HttpURLConnection.HTTP_OK) {
                                             InputStream mInputStream = mConnection.getInputStream();
-                                            String mResult = convertStreamToString(mInputStream);
+                                            String mResult = Music163Constants.convertStreamToString(mInputStream);
                                             Log.d(TAG, mResult);
                                             JSONObject mObj = new JSONObject(mResult);
-                                            final JSONObject mSongObj = ((JSONArray) mObj.get(RESPONSE_DATA_SONGS)).getJSONObject(0);
-                                            String title = mSongObj.getString(RESPONSE_DATA_NAME);
-                                            String singer = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getJSONArray(RESPONSE_DATA_ARTISTS).getJSONObject(0).getString(RESPONSE_DATA_NAME);
-                                            String epname = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_NAME);
-                                            String picUrl = mSongObj.getJSONObject(RESPONSE_DATA_ALBUM).getString(RESPONSE_DATA_PICURL);
+                                            final JSONObject mSongObj = ((JSONArray) mObj.get(Music163Constants.RESPONSE_DATA_SONGS)).getJSONObject(0);
+                                            String title = mSongObj.getString(Music163Constants.RESPONSE_DATA_NAME);
+                                            String singer = mSongObj.getJSONObject(Music163Constants.RESPONSE_DATA_ALBUM).getJSONArray(Music163Constants.RESPONSE_DATA_ARTISTS).getJSONObject(0).getString(Music163Constants.RESPONSE_DATA_NAME);
+                                            String epname = mSongObj.getJSONObject(Music163Constants.RESPONSE_DATA_ALBUM).getString(Music163Constants.RESPONSE_DATA_NAME);
+                                            String picUrl = mSongObj.getJSONObject(Music163Constants.RESPONSE_DATA_ALBUM).getString(Music163Constants.RESPONSE_DATA_PICURL);
                                             mSongList.add(new Song(songId, title, singer, epname, picUrl));
                                         }
 
@@ -225,9 +220,9 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "click song "+position);
                     Song songObj = songList.get(position);
                     Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-                    intent.putExtra(MainActivity.DB_TYPE, OpenHelperFactory.DB_TYPE_NETWORK);
-                    intent.putExtra(DetailActivity.DETAIL_CURRENT_SONG, songObj);
-                    intent.putExtra(DetailActivity.DETAIL_SONG_LIST, (Serializable) mSongList);
+                    intent.putExtra(BundleConstants.DB_TYPE, OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK);
+                    intent.putExtra(BundleConstants.DETAIL_CURRENT_SONG, songObj);
+                    intent.putExtra(BundleConstants.DETAIL_SONG_LIST, (Serializable) mSongList);
                     startActivity(intent);
                 }
             });

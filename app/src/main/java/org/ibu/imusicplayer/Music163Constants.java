@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
  * music163常量类
  */
 public final class Music163Constants {
+    private static final String TAG = "Music163Constants";
     private Music163Constants(){}
     /* music163网络请求API*/
     public final static String music163SearchUrl = "https://music.163.com/api/search/get/web?limit=20&type=1&s=arg_s";
@@ -54,7 +55,7 @@ public final class Music163Constants {
                 sb.append(line+"\n");
             }
         }catch (IOException e){
-            Log.d("IMUSICPLAYER_ERROR", e.getMessage());
+            Log.d(TAG, e.getMessage());
         } finally {
             try {
                 is.close();

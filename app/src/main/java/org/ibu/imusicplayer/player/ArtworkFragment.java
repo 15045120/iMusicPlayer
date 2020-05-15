@@ -19,10 +19,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.ibu.imusicplayer.R;
+import org.ibu.imusicplayer.dao.LocalOpenHelper;
 import org.ibu.imusicplayer.lyric.DownloadMp3Util;
 import org.ibu.imusicplayer.Song;
 import org.ibu.imusicplayer.dao.CollectOpenHelper;
@@ -39,6 +43,7 @@ public class ArtworkFragment extends SimpleFragment {
     /* 数据库操作帮助类*/
     CollectOpenHelper dbHelper;
     DownloadOpenHelper downloadOpenHelper;
+    LocalOpenHelper localOpenHelper;
     /* android6以上动态申请读写权限请求码*/
     int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 2;
 
@@ -59,8 +64,11 @@ public class ArtworkFragment extends SimpleFragment {
 //        collectIcon = view.findViewById(R.id.collect_icon);
 //        // 初始化下载按钮
         downloadIcon = view.findViewById(R.id.download_icon);
-        downloadIcon.setVisibility(View.INVISIBLE);
+
         downloadOpenHelper = new DownloadOpenHelper(detailActivity);
+        localOpenHelper = new LocalOpenHelper(detailActivity);
+        // 数据库中存在隐藏下载按钮
+        downloadIcon.setVisibility(View.INVISIBLE);
         // 初始化下载按钮文字
         mNotifyManager = (NotificationManager) detailActivity.getSystemService(Context.NOTIFICATION_SERVICE);
 //        // 监听收藏按钮
@@ -144,18 +152,41 @@ public class ArtworkFragment extends SimpleFragment {
         //update(args);
         return view;
     }
-
+    void updateDownloadIcon(){
+        if (downloadOpenHelper.exist(mSong.getId()) != null) {
+            Log.d(TAG, "download exist:" + (downloadOpenHelper.exist(mSong.getId()) == null));
+            downloadIcon.setVisibility(View.GONE);
+        }else if(localOpenHelper.exist(mSong.getId()) != null){
+            downloadIcon.setVisibility(View.INVISIBLE);
+        }else{
+            downloadIcon.setVisibility(View.VISIBLE);
+        }
+    }
     @Override
     public void onAttach(Context context) {
         Log.d(TAG, "onAttach");
         super.onAttach(context);
+    }
+    void startRotateArtwork(){
+        Log.d(TAG, "startRotateArtwork");
+//        Animation rotateAnimation = new RotateAnimation(0f,360.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+//        rotateAnimation.setFillAfter(true);
+//        rotateAnimation.setDuration(0);
+//        rotateAnimation.setRepeatCount(360);
+//        rotateAnimation.setInterpolator(new LinearInterpolator());
+//        rotateAnimation.setDetachWallpaper(true);
+//
+//        songPicImageView.startAnimation(rotateAnimation);
+    }
+    void stopRotateArtwork(){
+        Log.d(TAG, "stopRotateArtwork");
+//        songPicImageView.clearAnimation();
     }
 
     void download(){
         if(downloadOpenHelper.exist(mSong.getId()) == null) {
             Toast.makeText(detailActivity, "正在后台下载歌曲，请耐心等待", Toast.LENGTH_LONG).show();
 
-            downloadIcon.setVisibility(View.GONE);
             // 开始下载
             // android 8以后通知栏需要加channelId
             downloadIcon.setVisibility(View.GONE);

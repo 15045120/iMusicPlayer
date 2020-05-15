@@ -211,7 +211,7 @@ public class DownloadMp3Util {
         try {
             is = new FileInputStream(new File(mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg"));
         }catch (FileNotFoundException e){
-
+            return getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png");
         }finally {
             return is;
         }
@@ -234,6 +234,7 @@ public class DownloadMp3Util {
             content =  byteArray.toString();
         }catch(FileNotFoundException e0){
             e0.printStackTrace();
+            return "";
         } finally {
             return content;
         }
