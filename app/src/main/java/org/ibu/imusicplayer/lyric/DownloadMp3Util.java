@@ -16,11 +16,14 @@
 package org.ibu.imusicplayer.lyric;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import org.ibu.imusicplayer.EventListeners;
+import org.ibu.imusicplayer.R;
 import org.ibu.imusicplayer.Song;
 import org.ibu.imusicplayer.player.DetailActivity;
 import org.json.JSONException;
@@ -81,9 +84,10 @@ public class DownloadMp3Util {
                 File tempDir = new File(mMp3Dir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".mp3");
                 Log.d("IMUSICPLAYER_DOWNLOAD",mMp3Dir + mSong.getSinger() + "-" + mSong.getTitle() + ".mp3");
                 FileOutputStream fos = new FileOutputStream(tempDir);
-                int one = 0;
-                while ((one = mis.read()) != -1) {
-                    fos.write(one);
+                byte[] buffer = new byte[1024];
+                int mCount = 0;
+                while((mCount = mis.read(buffer)) > 0){
+                    fos.write(buffer);
                 }
                 mis.close();
                 fos.close();
@@ -96,9 +100,10 @@ public class DownloadMp3Util {
                 Log.d("IMUSICPLAYER_DOWNLOAD", mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg");
                 File tempAlbumDir = new File(mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg");
                 FileOutputStream albumFOS = new FileOutputStream(tempAlbumDir);
-                int mOne = 0;
-                while ((mOne = albumInputStream.read()) != -1) {
-                    albumFOS.write(mOne);
+                buffer = new byte[1024];
+                mCount = 0;
+                while((mCount = albumInputStream.read(buffer)) > 0){
+                    albumFOS.write(buffer);
                 }
                 albumFOS.flush();
                 albumInputStream.close();

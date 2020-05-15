@@ -246,6 +246,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                 if(mediaPlayer!=null){
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
+                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
                     isPlaying = true;
                     mediaPlayer.start();
                     // 定时任务，每一秒更新一下seekBar
@@ -480,7 +481,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         try {
             String mp3Url = mSong.getMp3Url();
             Log.d(TAG, "使用本地资源"+mp3Url);
-//            downloadIcon.setVisibility(View.GONE);
+            ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.GONE);
             // 初始化mediaPlayer
             Uri mp3Uri = Uri.fromFile(new File(mp3Url)); // initialize Uri here
             mediaPlayer = new MediaPlayer();
@@ -496,6 +497,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     seekBarMaxValue.setText(encodeTime(maxValue));
                     // 更新按钮图片
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
+                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
                     isPlaying = true;
                     // 开始播放
                     mediaPlayer.start();
@@ -580,7 +582,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                             // 数据库中不存在才下载
                                             if (downloadOpenHelper.exist(mSong.getId()) == null) {
                                                 Log.d("IMUSICPLAYER_DOWNLOAD", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
-//                                                downloadIcon.setVisibility(View.VISIBLE);
+                                                ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
                                             }
                                         }
                                     });
@@ -590,6 +592,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                     seekBarMaxValue.setText(encodeTime(maxValue));
                                     // 更新按钮图片
                                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
+                                    ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.VISIBLE);
 //                                        playText.setText("暂停");
                                     isPlaying = true;
                                     // 开始播放
