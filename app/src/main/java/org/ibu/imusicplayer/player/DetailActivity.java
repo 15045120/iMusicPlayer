@@ -388,9 +388,16 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         previousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 int cursor = mSongList.indexOf(mSong);
-                cursor = (cursor+mSongList.size()-1) % mSongList.size();
+                switch (playMode){
+                    case 0:
+                        cursor = (cursor+mSongList.size()+1) % mSongList.size();break;
+                    case 1:
+                        cursor = cursor;break;
+                    case 2:
+                        double random = Math.random();
+                        cursor = new Double(random * mSongList.size()).intValue();break;
+                }
                 mSong = null;
                 mSong = mSongList.get(cursor);
                 if(mediaPlayer != null){
