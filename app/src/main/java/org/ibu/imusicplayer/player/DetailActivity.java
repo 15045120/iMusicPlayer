@@ -74,8 +74,6 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     /* 加载图标 */
     LinearLayout loadingBlock;
     LinearLayout loadedBlock;
-    /* android6以上动态申请读写权限请求码*/
-    int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 2;
     /* 数据库操作帮助类*/
     CollectOpenHelper dbHelper;
     BaseOpenHelper downloadOpenHelper;
@@ -107,6 +105,10 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             "随机播放"};
 
     String dbType;
+
+//    ImageView collectIcon;              // 收藏按钮
+    BaseOpenHelper collectOpenHelper;
+
     /**
      * 初始化seekBar
      * 问题：使用正则表达式提取歌词最后一个时间（这里不准确）
@@ -142,7 +144,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                 }
 
                                 mediaPlayer.start();
-                                //lyricFragment.songLyricTextView.seekTo(mediaPlayer.getCurrentPosition());
+
                                 timer = new Timer();
                                 timer.schedule(new TimerTask() {
                                     @Override
@@ -153,6 +155,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                                 public void run() {
                                                     if(mediaPlayer!=null) {
                                                         seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                                                        lyricFragment.songLyricTextView.seekTo(mediaPlayer.getCurrentPosition());
                                                     }
                                                 }
                                             });
@@ -181,11 +184,13 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         // 初始化seekBar
         seekBarCurrentValue.setText("0:00");
         seekBarMaxValue.setText("0:00");
-
-        if (dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK)){
-            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
-            downloadMp3Util.search();
-        }else if(downloadOpenHelper.exist(mSong.getId()) != null){
+//        // 初始化收藏按钮
+//        if(collectOpenHelper.exist(mSong.getId()) == null) {
+//            collectIcon.setImageResource(R.drawable.ic_collect_black_24dp);
+//        }else {
+//            collectIcon.setImageResource(R.drawable.ic_collected_red_24dp);
+//        }
+        if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL) || downloadOpenHelper.exist(mSong.getId()) != null){
             DownloadMp3Util downloadMp3Util = new DownloadMp3Util(this, mSong);
             // 初始化封面
             InputStream mInputStream = downloadMp3Util.readAlbumImage();
@@ -196,8 +201,6 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Bitmap bitmap = BitmapFactory.decodeStream(getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png"));
-                    mSong.setBitmap(bitmap);
                     DetailActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -206,20 +209,10 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     });
                 }
             }).start();
-        }else{
-            Bitmap bitmap = BitmapFactory.decodeStream(getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png"));
-            mSong.setBitmap(bitmap);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DetailActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            ((EventListeners)DetailActivity.this).onSearchFinished(mSong);
-                        }
-                    });
-                }
-            }).start();
+        }
+        else{
+            DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
+            downloadMp3Util.search();
         }
     }
 
@@ -264,6 +257,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
                     
                     ((ArtworkFragment)artworkFragment).updateDownloadIcon();
+//                    updateCollectIcon();
                     isPlaying = true;
                     mediaPlayer.start();
                     ((ArtworkFragment)artworkFragment).startRotateArtwork();
@@ -363,6 +357,25 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         // 初始化下载按钮
         downloadOpenHelper = OpenHelperFactory.getOpenHelper(this,
                                 OpenHelperFactory.DB_TYPE.DB_TYPE_DOWNLOAD);
+//        collectOpenHelper = OpenHelperFactory.getOpenHelper(this,
+//                OpenHelperFactory.DB_TYPE.DB_TYPE_COLLECT);
+//        collectIcon = findViewById(R.id.collect_icon);
+//        collectIcon.setVisibility(View.INVISIBLE);
+//        // 监听收藏按钮
+//        collectIcon.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if(collectOpenHelper.exist(mSong.getId()) == null) {
+//                    collectOpenHelper.insert(mSong);
+//                    collectIcon.setImageResource(R.drawable.ic_collected_red_24dp);
+//                    Toast.makeText(DetailActivity.this, "已收藏", Toast.LENGTH_SHORT).show();
+//                }else {
+//                    collectOpenHelper.delete(mSong.getId());
+//                    collectIcon.setImageResource(R.drawable.ic_collect_black_24dp);
+//                    Toast.makeText(DetailActivity.this, "取消收藏", Toast.LENGTH_SHORT).show();
+//                }
+//            }
+//        });
         // 初始化播放暂停按钮
         playIcon = findViewById(R.id.play_icon);
         // 初始化视图内容
@@ -442,6 +455,9 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             playButtonListener.onClick(null);
         }
     }
+//    void updateCollectIcon(){
+//        collectIcon.setVisibility(View.VISIBLE);
+//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
@@ -475,22 +491,6 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             }
         });
         initView();
-    }
-
-    /**
-     * 动态申请权限后回调方法
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE){
-            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
-                // 下载Mp3文件至本地
-                ((ArtworkFragment)artworkFragment).download();
-            }else{// 授权失败
-                Toast.makeText(DetailActivity.this, "请允许存储权限", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     /**
@@ -602,6 +602,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                             if (downloadOpenHelper.exist(mSong.getId()) == null) {
                                                 Log.d("IMUSICPLAYER_DOWNLOAD", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
                                                 ((ArtworkFragment)artworkFragment).updateDownloadIcon();
+//                                                updateCollectIcon();
                                             }
                                         }
                                     });
@@ -612,6 +613,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                     // 更新按钮图片
                                     playIcon.setImageResource(R.drawable.ic_pause_black_24dp);
                                     ((ArtworkFragment)artworkFragment).updateDownloadIcon();
+//                                    updateCollectIcon();
                                     isPlaying = true;
                                     // 开始播放
                                     mediaPlayer.start();
@@ -680,9 +682,20 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 加载音频源
      */
     void searchMp3Url(){
-        if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL)){
+        if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_COLLECT)){
+            if(downloadOpenHelper.exist(mSong.getId()) != null){
+                searchMp3UrlFromStorage();
+            }else{
+                searchMp3UrlFromNetwork();
+            }
+        }
+        else if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL)){
             searchMp3UrlFromStorage();
-        }else if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK)) {
+        }
+        else if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_NETWORK)) {
+            searchMp3UrlFromNetwork();
+        }
+        else{
             searchMp3UrlFromNetwork();
         }
     }

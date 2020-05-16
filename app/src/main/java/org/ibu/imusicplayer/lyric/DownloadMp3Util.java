@@ -17,8 +17,11 @@ package org.ibu.imusicplayer.lyric;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -39,6 +42,7 @@ import static org.ibu.imusicplayer.Music163Constants.*;
  * 下载音频文件工具类
  */
 public class DownloadMp3Util {
+    private static final String TAG = "DownloadMp3Util";
 
     public final static String IMUSICPLAYER_MP3_DIR = "/storage/emulated/0/iMusicPlayer/source/";
     public final static String IMUSICPLAYER_ALBUM_DIR = "/storage/emulated/0/iMusicPlayer/album/";
@@ -73,6 +77,7 @@ public class DownloadMp3Util {
         DownLoadMp3AsyncTask(EventListeners context){
             mmContext = context;
         }
+
         /* 下载主要实现方法 */
         @Override
         protected Boolean doInBackground(String... params) {
@@ -81,8 +86,8 @@ public class DownloadMp3Util {
                 URL url = new URL(params[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 InputStream mis = connection.getInputStream();
-                File tempDir = new File(mMp3Dir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".mp3");
-                Log.d("IMUSICPLAYER_DOWNLOAD",mMp3Dir + mSong.getSinger() + "-" + mSong.getTitle() + ".mp3");
+                File tempDir = new File(mMp3Dir + "/" + mSong.getTitle() + ".mp3");
+                Log.d(TAG,mMp3Dir + mSong.getTitle() + ".mp3");
                 FileOutputStream fos = new FileOutputStream(tempDir);
                 byte[] buffer = new byte[1024];
                 int mCount = 0;
@@ -91,14 +96,14 @@ public class DownloadMp3Util {
                 }
                 mis.close();
                 fos.close();
+
                 // 下载封面
-                URL mUrl = new URL(params[1]);
-                HttpURLConnection mConnection = (HttpURLConnection) mUrl.openConnection();
-                mConnection.setRequestMethod("GET");
-                mConnection.connect();
-                InputStream albumInputStream = mConnection.getInputStream();
-                Log.d("IMUSICPLAYER_DOWNLOAD", mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg");
-                File tempAlbumDir = new File(mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg");
+                Bitmap bitmap = mSong.getBitmap();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                InputStream albumInputStream = new ByteArrayInputStream(baos.toByteArray());
+                Log.d(TAG, mAlbumDir + "/" + mSong.getTitle() + ".jpg");
+                File tempAlbumDir = new File(mAlbumDir + "/" + mSong.getTitle() + ".jpg");
                 FileOutputStream albumFOS = new FileOutputStream(tempAlbumDir);
                 buffer = new byte[1024];
                 mCount = 0;
@@ -108,6 +113,15 @@ public class DownloadMp3Util {
                 albumFOS.flush();
                 albumInputStream.close();
                 albumFOS.close();
+                // 扫描媒体库
+                MediaScannerConnection.scanFile((Activity)mmContext, new String[]{tempDir.getAbsolutePath()}, null,
+                        new MediaScannerConnection.OnScanCompletedListener(){
+
+                            @Override
+                            public void onScanCompleted(String path, Uri uri) {
+                                Log.d(TAG, "onScanCompleted");
+                            }
+                        });
                 return true;
             }catch (Exception e){
                 return false;
@@ -130,7 +144,7 @@ public class DownloadMp3Util {
         }else{
             try {
                 // 下载歌词
-                File tempLyricDir = new File(mLyricDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".lrc");
+                File tempLyricDir = new File(mLyricDir + "/" + mSong.getTitle() + ".lrc");
                 FileOutputStream lyricFOS = new FileOutputStream(tempLyricDir);
                 lyricFOS.write(lyric.getBytes());
                 lyricFOS.flush();
@@ -209,9 +223,9 @@ public class DownloadMp3Util {
     public InputStream readAlbumImage(){
         InputStream is = null;
         try {
-            is = new FileInputStream(new File(mAlbumDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".jpg"));
+            is = new FileInputStream(new File(mAlbumDir + "/" + mSong.getTitle() + ".jpg"));
         }catch (FileNotFoundException e){
-            return getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png");
+            return mContext.getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png");
         }finally {
             return is;
         }
@@ -221,7 +235,7 @@ public class DownloadMp3Util {
         String content = "";
         InputStream is = null;
         try{
-            is = new FileInputStream(new File(mLyricDir + "/" + mSong.getSinger() + "-" + mSong.getTitle() + ".lrc"));
+            is = new FileInputStream(new File(mLyricDir + "/" + mSong.getTitle() + ".lrc"));
             byte[] bytes = new byte[1024];
             ByteArrayOutputStream byteArray =  new ByteArrayOutputStream();
             int len = 0;

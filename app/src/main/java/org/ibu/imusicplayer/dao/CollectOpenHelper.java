@@ -40,7 +40,7 @@ public class CollectOpenHelper extends SQLiteOpenHelper implements BaseOpenHelpe
     }
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE collect(id VACHAR(16) PRIMARY KEY,title VARCHAR(64),singer VARCHAR(64),epname VARCHAR(64),picUrl VARCHAR(64))");
+        sqLiteDatabase.execSQL("CREATE TABLE collect(id VACHAR(16) PRIMARY KEY,title VARCHAR(64),singer VARCHAR(64),epname VARCHAR(64),picUrl VARCHAR(64),mp3Url VARCHAR(64))");
     }
 
     @Override

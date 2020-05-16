@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     ListView songListView;
 
     List<Song> mSongList;
-
+    /* android6以上动态申请读写权限请求码*/
     int READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
 
     @Override
@@ -68,30 +68,28 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if(requestCode == READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE){
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){// 授权成功
-                toSongListActivity();
+//                toSongListActivity(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL);
             }else{// 授权失败
-                Toast.makeText(this, "请允许存储权限，下载歌曲", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "请允许存储权限", Toast.LENGTH_SHORT).show();
+                this.finish();
             }
         }
     }
-    void toSongListActivity(){
+    void toSongListActivity(String dbType){
         Log.d(TAG, "toSongListActivity");
         Intent intent = new Intent(getApplicationContext(), SongListActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putString(BundleConstants.DB_TYPE, OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL);
+        bundle.putString(BundleConstants.DB_TYPE, dbType);
         intent.putExtras(bundle);
         startActivity(intent);
     }
     private void ensureLocalPermission(){
         Log.d(TAG, "ensureLocalPermission");
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            //申请READ_EXTERNAL_STORAGE权限
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE},
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+            //申请WRITE_EXTERNAL_STORAGE权限
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     READ_WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
-        }else{
-            toSongListActivity();
         }
     }
     @Override
@@ -101,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ensureLocalPermission();
         initView();
     }
 
@@ -119,9 +118,17 @@ public class MainActivity extends AppCompatActivity {
         downloadedIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ensureLocalPermission();
+                toSongListActivity(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL);
             }
         });
+        // 自定义更多按钮
+//        ImageView collectIcon = findViewById(R.id.icon_collectlist);
+//        collectIcon.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                toSongListActivity(OpenHelperFactory.DB_TYPE.DB_TYPE_COLLECT);
+//            }
+//        });
         // 监听输入框按下搜索
         songNameInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
