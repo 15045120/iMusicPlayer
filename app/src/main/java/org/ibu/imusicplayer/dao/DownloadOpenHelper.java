@@ -60,6 +60,15 @@ public class DownloadOpenHelper extends SQLiteOpenHelper implements BaseOpenHelp
         db.execSQL("DELETE FROM download WHERE id = ?",
                 new String[]{id});
     }
+
+    @Override
+    public void delete(Song song) {
+        Log.d(TAG, "delete "+song);
+        SQLiteDatabase db = getWritableDatabase();
+        db.execSQL("DELETE FROM download WHERE mp3Url = ?",
+                new String[]{song.getMp3Url()});
+    }
+
     public Song exist(String id){
         Log.d(TAG, "exist "+id);
         SQLiteDatabase db = getReadableDatabase();

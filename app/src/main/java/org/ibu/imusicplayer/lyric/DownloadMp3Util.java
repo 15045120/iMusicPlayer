@@ -220,6 +220,20 @@ public class DownloadMp3Util {
         }).start();
     }
 
+    public void remove() {
+        File tempDir = new File(mSong.getMp3Url());
+        File tempAlbumDir = new File(mAlbumDir + "/" + mSong.getTitle() + ".jpg");
+        File tempLyricDir = new File(mLyricDir + "/" + mSong.getTitle() + ".lrc");
+        if (tempDir.exists()) {
+            tempDir.delete();
+        }
+        if (tempAlbumDir.exists()) {
+            tempAlbumDir.delete();
+        }
+        if (tempLyricDir.exists()) {
+            tempLyricDir.delete();
+        }
+    }
     public InputStream readAlbumImage(){
         InputStream is = null;
         try {

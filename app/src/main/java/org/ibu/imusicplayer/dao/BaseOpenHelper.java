@@ -22,6 +22,7 @@ import java.util.List;
 public interface BaseOpenHelper {
     void insert(Song song);
     void delete(String id);
+    void delete(Song song);
     Song exist(String id);
     List<Song> queryAll();
 }

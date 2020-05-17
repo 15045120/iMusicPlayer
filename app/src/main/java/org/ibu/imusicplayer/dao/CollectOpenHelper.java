@@ -60,6 +60,12 @@ public class CollectOpenHelper extends SQLiteOpenHelper implements BaseOpenHelpe
         db.execSQL("DELETE FROM collect WHERE id = ?",
                 new String[]{id});
     }
+
+    @Override
+    public void delete(Song song) {
+
+    }
+
     public Song exist(String id){
         Log.d(TAG, "exist "+id);
         SQLiteDatabase db = getReadableDatabase();
