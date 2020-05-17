@@ -1,0 +1,15 @@
+<!--通常用于控件背景色-->
+<!-- android:shape指定形状类型，默认为rectangle -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle">
+    <!--边框线-->
+    <stroke
+            android:width="0.04dp"
+            android:color="#12000000" />
+    <!--间距-->
+    <padding
+            android:bottom="1dp"
+            android:left="1dp"
+            android:right="1dp"
+            android:top="1dp" />
+</shape>

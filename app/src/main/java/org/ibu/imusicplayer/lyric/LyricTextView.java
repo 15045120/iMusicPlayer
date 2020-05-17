@@ -21,18 +21,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.ViewTreeObserver;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import org.ibu.imusicplayer.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LyricTextView extends ScrollView {
+public class LyricTextView extends TextView {
     private static final String TAG = "LyricTextView";
 
     public LyricPlayer mLyricPlayer;
@@ -104,19 +101,19 @@ public class LyricTextView extends ScrollView {
                 break;
             case MotionEvent.ACTION_MOVE:
                 Log.d(TAG,"ACTION_MOVE");
-                if(eventY < mTouchStartY - 0.5*mLyricDrawable.mTextHeight){
-                    if(mLyricPlayer.getCurNum() > 3) {
-                        mLyricPlayer.setCurNum(mLyricPlayer.getCurNum() - 1);
-                        Log.d(TAG, "mTouchStartY - 0.5*mLyricDrawable.mTextHeight");
-                        invalidate();
-                    }
-                }else if(eventY > mTouchStartY + 0.5*mLyricDrawable.mTextHeight){
+                if(eventY < mTouchStartY - mLyricDrawable.mTextHeight){
                     if(mLyricPlayer.getCurNum() < mLyricPlayer.getProcessedLyricList().size()-7) {
                         mLyricPlayer.setCurNum(mLyricPlayer.getCurNum()+1);
                         Log.d(TAG,"mTouchStartY + 0.5*mLyricDrawable.mTextHeight");
                         invalidate();
                     }
-                } else {
+
+                }else if(eventY > mTouchStartY + mLyricDrawable.mTextHeight){
+                    if(mLyricPlayer.getCurNum() > 3) {
+                        mLyricPlayer.setCurNum(mLyricPlayer.getCurNum() - 1);
+                        Log.d(TAG, "mTouchStartY - 0.5*mLyricDrawable.mTextHeight");
+                        invalidate();
+                    }
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -154,23 +151,16 @@ public class LyricTextView extends ScrollView {
 
     private class LyricDrawable{
         float mTextHeight;
-        float mPaddingLeft = 10;
-        float mLineWidth = 40;
 
-        float mStartX;
-        float radio;
+        float mCenterX;
 
         Canvas mCanvas;
         LyricDrawable(Canvas canvas){
             mCanvas = canvas;
             Log.d(TAG, "width:"+canvas.getWidth()+"/height:"+ canvas.getHeight());
-            float ratioWidth = (float)canvas.getWidth() / 1080;
-            float ratioHeight = (float)canvas.getHeight() / 1920;
-            radio = Math.min(ratioWidth, ratioHeight);
-
             mTextHeight = canvas.getHeight() / 7;
-//            mStartX = 2*mPaddingLeft + mLineWidth + 0.8f*mTextHeight;
-            mStartX = canvas.getWidth()/2;
+            mCenterX = canvas.getWidth()/2;
+            Log.d(TAG, "mCenterX="+mCenterX+"/mTextHeight="+mTextHeight);
         }
         List<String> parseLyric(List<String> lyrics, int curNum){
             List<String> temp = new ArrayList<>(lyrics);
@@ -188,17 +178,18 @@ public class LyricTextView extends ScrollView {
                     lyrics.add(temp.size()-1, "");
                 }
             }
-            return lyrics.subList(fromIndex, fromIndex + 6);
+            return lyrics.subList(fromIndex, fromIndex + 7);
         }
         void doOnDraw(){
             // paint text
             Paint textPaint = new Paint();
             textPaint.setTextAlign(Paint.Align.CENTER);
-            int TEXT_SIZE = Math.round(40 * radio);
-//            textPaint.setTextSize(TEXT_SIZE);
             textPaint.setTextSize(50);
-
             textPaint.setColor(mTextColor);
+
+            Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+            float baseline = (fontMetrics.bottom - fontMetrics.top)/2 - fontMetrics.bottom;
+
             List<String> tempLyric;
             if (mLyricPlayer.getProcessedLyricList().size() == 1){
                tempLyric = new ArrayList<>();
@@ -214,7 +205,8 @@ public class LyricTextView extends ScrollView {
             }
             for (int i = 0; i < tempLyric.size(); i++) {
                 textPaint.setColor(i==3 ? mHighlightTextColor: mTextColor);
-                mCanvas.drawText(tempLyric.get(i), mStartX, (i+1)*mTextHeight, textPaint);
+                float centerH = (i*mTextHeight +(i+1)*mTextHeight)/2;
+                mCanvas.drawText(tempLyric.get(i), mCenterX, centerH + baseline, textPaint);
             }
         }
     }

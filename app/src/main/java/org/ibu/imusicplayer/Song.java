@@ -42,6 +42,10 @@ public class Song implements Serializable {
         return id.equalsIgnoreCase(((Song)obj).id);
     }
 
+    public Song(){
+
+    }
+
     public Song(String id, String title, String singer, String epname, String picUrl) {
         this.id = id;
         this.title = title;

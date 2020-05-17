@@ -20,7 +20,8 @@
                 android:layout_gravity="center_vertical"/>
 
         <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="60dp"
                 android:orientation="horizontal">
             <TextView
@@ -34,12 +35,61 @@
                     android:textColor="#000000"
             />
         </LinearLayout>
+        <LinearLayout
+                android:id="@+id/song_edit_block"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:orientation="horizontal">
+            <TextView
+                    android:id="@+id/song_edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:paddingLeft="10dp"
+                    android:textSize="18dp"
+                    android:ellipsize="end"
+                    android:textColor="#000000"
+                    android:text="编辑"
+            />
+        </LinearLayout>
     </LinearLayout>
-
     <ListView
             android:id="@+id/collect_song_name_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
     />
-
+    <LinearLayout
+            android:id="@+id/song_delete_block"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal">
+        <TextView
+                android:id="@+id/song_select_all"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:textAlignment="center"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:textSize="18dp"
+                android:background="@drawable/bg_delete"
+                android:ellipsize="end"
+                android:textColor="#000000"
+                android:text="全选"
+        />
+        <TextView
+                android:id="@+id/song_delete"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:textAlignment="center"
+                android:layout_gravity="center_vertical"
+                android:textSize="18dp"
+                android:ellipsize="end"
+                android:textColor="#000000"
+                android:background="@drawable/bg_delete"
+                android:text="删除"
+        />
+    </LinearLayout>
 </LinearLayout>
