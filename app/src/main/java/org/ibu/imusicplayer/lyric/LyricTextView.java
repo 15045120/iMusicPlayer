@@ -84,6 +84,7 @@ public class LyricTextView extends TextView {
 
     @Override
     protected void onDraw(Canvas canvas) {
+		Log.d(TAG,"onDraw(Canvas canvas)");
         super.onDraw(canvas);
         doOnDraw(canvas);
     }
@@ -96,42 +97,32 @@ public class LyricTextView extends TextView {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                Log.d(TAG,"ACTION_DOWN");
+				Log.d(TAG,"ACTION_DOWN on ("+eventY+")");
                 mTouchStartY = eventY;
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.d(TAG,"ACTION_MOVE");
+				Log.d(TAG,"ACTION_MOVE to ("+eventY+")");
                 if(eventY < mTouchStartY - mLyricDrawable.mTextHeight){
                     if(mLyricPlayer.getCurNum() < mLyricPlayer.getProcessedLyricList().size()-7) {
                         mLyricPlayer.setCurNum(mLyricPlayer.getCurNum()+1);
-                        Log.d(TAG,"mTouchStartY + 0.5*mLyricDrawable.mTextHeight");
+                        Log.d(TAG,"mTouchStartY + 1*mLyricDrawable.mTextHeight");
                         invalidate();
                     }
 
                 }else if(eventY > mTouchStartY + mLyricDrawable.mTextHeight){
                     if(mLyricPlayer.getCurNum() > 3) {
                         mLyricPlayer.setCurNum(mLyricPlayer.getCurNum() - 1);
-                        Log.d(TAG, "mTouchStartY - 0.5*mLyricDrawable.mTextHeight");
+                        Log.d(TAG, "mTouchStartY - 1*mLyricDrawable.mTextHeight");
                         invalidate();
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                Log.d(TAG,"ACTION_UP");
+                Log.d(TAG,"ACTION_UP on ("+eventY+")");
                 // chick event
                 if (mTouchStartY == eventY){
                     mOnLyricTouchListener.OnLyricTouched();
                 }
-//                if(eventY < mLyricDrawable.mStartY){
-//
-//
-//                }else if(eventY > mLyricDrawable.mStartY + mLyricDrawable.mViewHeight){
-//                }
-//                // call the listener method
-//                if(mOnTimerValueListener != null){
-//                    mOnTimerValueListener.onTimerValueChanged(this, mHour, mMinute);
-//                }
-//                invalidate();
                 break;
             default:
                 break;
@@ -141,10 +132,12 @@ public class LyricTextView extends TextView {
 
     @Override
     public void invalidate() {
+		Log.d(TAG,"invalidate()");
         super.invalidate();
     }
 
     private void doOnDraw(Canvas canvas){
+		Log.d(TAG,"doOnDraw(Canvas canvas)");
         mLyricDrawable = new LyricDrawable(canvas);
         mLyricDrawable.doOnDraw();
     }
@@ -157,30 +150,38 @@ public class LyricTextView extends TextView {
         Canvas mCanvas;
         LyricDrawable(Canvas canvas){
             mCanvas = canvas;
-            Log.d(TAG, "width:"+canvas.getWidth()+"/height:"+ canvas.getHeight());
+            Log.d(TAG, "canvas width:"+canvas.getWidth()+"/height:"+ canvas.getHeight());
             mTextHeight = canvas.getHeight() / 7;
             mCenterX = canvas.getWidth()/2;
             Log.d(TAG, "mCenterX="+mCenterX+"/mTextHeight="+mTextHeight);
         }
         List<String> parseLyric(List<String> lyrics, int curNum){
+			Log.d(TAG,"parse lyric:"+lyrics.toString()+"/curNum:"+curNum);
             List<String> temp = new ArrayList<>(lyrics);
-            int fromIndex = curNum;
-            if (curNum < 3){
-                for (int i = 0; i < 3-curNum; i++) {
-                    lyrics.add(0, "");
-                }
-                fromIndex = 3;
-            }else{
-                fromIndex = curNum - 3;
+            for (int i = 0; i < 7; i++) {
+                temp.add(0, "");
             }
-            if(curNum+3 > temp.size()){
-                for (int i = 0; i < curNum+3-temp.size(); i++) {
-                    lyrics.add(temp.size()-1, "");
-                }
+            for (int i = 0; i < 7; i++) {
+                temp.add(temp.size()-1, "");
             }
-            return lyrics.subList(fromIndex, fromIndex + 7);
+//            int fromIndex = curNum;
+//            if (curNum < 3){
+//                for (int i = 0; i < 3-curNum; i++) {
+//                    lyrics.add(0, "");
+//                }
+//                fromIndex = 3;
+//            }else{
+//                fromIndex = curNum - 3;
+//            }
+//            if(curNum+3 > temp.size()){
+//                for (int i = 0; i < curNum+3-temp.size(); i++) {
+//                    lyrics.add(temp.size()-1, "");
+//                }
+//            }
+            return temp.subList(curNum+7-3, curNum+7+3+1);
         }
         void doOnDraw(){
+			Log.d(TAG,"doOnDraw()");
             // paint text
             Paint textPaint = new Paint();
             textPaint.setTextAlign(Paint.Align.CENTER);
@@ -203,6 +204,7 @@ public class LyricTextView extends TextView {
             }else {
                 tempLyric = parseLyric(mLyricPlayer.getProcessedLyricList(), mLyricPlayer.getCurNum());
             }
+			Log.d(TAG,"parse lyric finished:"+tempLyric.toString());
             for (int i = 0; i < tempLyric.size(); i++) {
                 textPaint.setColor(i==3 ? mHighlightTextColor: mTextColor);
                 float centerH = (i*mTextHeight +(i+1)*mTextHeight)/2;
@@ -222,6 +224,7 @@ public class LyricTextView extends TextView {
 
             @Override
             public void OnLyricChanged() {
+				Log.d(TAG,"lyric changed");
                 new Thread(new Runnable() {
                     @Override
                     public void run() {

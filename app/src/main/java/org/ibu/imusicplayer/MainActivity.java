@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        Log.d(TAG, "onStart");
+        Log.d(TAG, "onStart()");
         super.onStart();
     }
     /**
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     void toSongListActivity(String dbType){
-        Log.d(TAG, "toSongListActivity");
+        Log.d(TAG, "toSongListActivity():"+dbType);
         Intent intent = new Intent(getApplicationContext(), SongListActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString(BundleConstants.DB_TYPE, dbType);
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
     private void ensureLocalPermission(){
-        Log.d(TAG, "ensureLocalPermission");
+        Log.d(TAG, "ensureLocalPermission()");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED){
             //申请WRITE_EXTERNAL_STORAGE权限
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "onCreate()");
         // 隐藏顶部标题
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void initView(){
-        Log.d(TAG, "initView");
+        Log.d(TAG, "initView()");
         // 初始化搜索输入框
         final EditText songNameInput = findViewById(R.id.song_name_input);
         songNameInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
@@ -118,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         downloadedIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+				Log.d(TAG, "click btn localsongs");
                 toSongListActivity(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL);
             }
         });
@@ -136,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
                 // 按下搜索键
                 if(actionId == EditorInfo.IME_ACTION_SEARCH){
                     if(songNameInput.getText().toString()!= null && !songNameInput.getText().toString().trim().equals("")){
-                        Log.d(TAG, "按下搜索按钮");
+                        Log.d(TAG, "click keyboard search");
                         loadingBlock.setVisibility(View.VISIBLE);
                         final List<String> songIdList = new ArrayList<>();
                         mSongList = new ArrayList<Song>();
@@ -187,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
 
                                     }
+									Log.d(TAG, "search finished:"+mSongList.toString());
                                     // 在子线程中更新UI
                                     MainActivity.this.runOnUiThread(new Runnable() {
                                         @Override
@@ -197,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     });
                                 }catch(Exception e){
-                                    Log.d(TAG, e.getMessage());
+                                    Log.d(TAG, "search fail:"+e.getMessage());
                                     e.printStackTrace();
                                 }
                             }
@@ -219,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
         }
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
+			Log.d(TAG, "getView():position:"+position);
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.song_name_list, null);
             // add listener to connect
             convertView.setOnClickListener(new View.OnClickListener() {

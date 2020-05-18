@@ -1,3 +1,18 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer.player;
 
 import android.Manifest;
@@ -48,7 +63,7 @@ public class ArtworkFragment extends SimpleFragment {
     final int DOWNLOAD_NOTIFY_ID = 1;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView");
+        Log.d(TAG, "onCreateView()");
         detailActivity = getActivity();
         Bundle args = getArguments();
         mSong = (Song) args.get("song");
@@ -123,6 +138,7 @@ public class ArtworkFragment extends SimpleFragment {
         return view;
     }
     void updateDownloadIcon(){
+		Log.d(TAG, "updateDownloadIcon()");
         if (downloadOpenHelper.exist(mSong.getId()) != null) {
             Log.d(TAG, "download exist:" + (downloadOpenHelper.exist(mSong.getId()) == null));
             downloadIcon.setVisibility(View.GONE);
@@ -134,11 +150,11 @@ public class ArtworkFragment extends SimpleFragment {
     }
     @Override
     public void onAttach(Context context) {
-        Log.d(TAG, "onAttach");
+        Log.d(TAG, "onAttach()");
         super.onAttach(context);
     }
     void startRotateArtwork(){
-        Log.d(TAG, "startRotateArtwork");
+        Log.d(TAG, "startRotateArtwork()");
 //        Animation rotateAnimation = new RotateAnimation(0f,360.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
 //        rotateAnimation.setFillAfter(true);
 //        rotateAnimation.setDuration(0);
@@ -149,11 +165,12 @@ public class ArtworkFragment extends SimpleFragment {
 //        songPicImageView.startAnimation(rotateAnimation);
     }
     void stopRotateArtwork(){
-        Log.d(TAG, "stopRotateArtwork");
+        Log.d(TAG, "stopRotateArtwork()");
 //        songPicImageView.clearAnimation();
     }
 
     void download(){
+		Log.d(TAG, "download()");
         if(downloadOpenHelper.exist(mSong.getId()) == null) {
             Toast.makeText(detailActivity, "正在后台下载歌曲，请耐心等待", Toast.LENGTH_LONG).show();
 
@@ -205,7 +222,7 @@ public class ArtworkFragment extends SimpleFragment {
     }
     @Override
     void update(Bundle bundle) {
-        Log.d(TAG, "update");
+        Log.d(TAG, "update():"+bundle);
         mSong = (Song) bundle.get("song");
         if (bundle.getBoolean("downloaded", false)){
             mNotifyManager.cancel(DOWNLOAD_NOTIFY_ID);

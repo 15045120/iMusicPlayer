@@ -96,6 +96,7 @@ public class HistoryOpenHelper extends SQLiteOpenHelper implements BaseOpenHelpe
         }
 
         cursor.close();
+		Log.d(TAG, "queryAll finished:"+songList.toString());
         return songList;
     }
 }

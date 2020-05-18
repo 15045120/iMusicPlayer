@@ -86,9 +86,9 @@ public class LyricPlayer {
                 String m3 = matcher.group(3);
                 String txt = matcher.group(4);
                 int time =  Integer.valueOf(m1) * 60 * 1000 + Integer.valueOf(m2) * 1000 + Integer.valueOf(m3);
-                if(txt.startsWith("制作人")){
-                    break;
-                }
+//                if(txt.startsWith("制作人")){
+//                    break;
+//                }
                 lineList.add(new Line(time, txt));
             }
         }

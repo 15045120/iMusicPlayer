@@ -29,7 +29,7 @@ import java.util.List;
  * 操作下载表的数据库帮助类
  */
 public class DownloadOpenHelper extends SQLiteOpenHelper implements BaseOpenHelper{
-    private static final String TAG = "CollectOpenHelper";
+    private static final String TAG = "DownloadOpenHelper";
 
     private static final int DATABASE_VERSION = 2;
     private static final String TABLE_NAME = "download";
@@ -101,6 +101,7 @@ public class DownloadOpenHelper extends SQLiteOpenHelper implements BaseOpenHelp
         }
 
         cursor.close();
+		Log.d(TAG, "queryAll finished:"+songList.toString());
         return songList;
     }
 }

@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalOpenHelper implements BaseOpenHelper{
-
+	private static final String TAG = "LocalOpenHelper";
+	
     Context mContext;
 
     public LocalOpenHelper(Context context){
@@ -49,6 +50,7 @@ public class LocalOpenHelper implements BaseOpenHelper{
 
     @Override
     public Song exist(String id) {
+		Log.d(TAG, "exist "+id);
         List<Song> songList = new ArrayList<>();
         Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,
@@ -78,6 +80,7 @@ public class LocalOpenHelper implements BaseOpenHelper{
 
     @Override
     public List<Song> queryAll() {
+		Log.d(TAG, "queryAll ");
         List<Song> songList = new ArrayList<>();
         Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                                         null,
@@ -99,6 +102,7 @@ public class LocalOpenHelper implements BaseOpenHelper{
                 cursor.moveToNext();
             }
         }
+		Log.d(TAG, "queryAll finished:"+songList.toString());
         return songList;
     }
 }

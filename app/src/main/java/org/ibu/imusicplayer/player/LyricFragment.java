@@ -31,7 +31,7 @@ public class LyricFragment extends SimpleFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView");
+        Log.d(TAG, "onCreateView()");
         Bundle args = getArguments();
         View view = inflater.inflate(R.layout.fragment_lyric, null);
         songLyricTextView = view.findViewById(R.id.song_lyric_text);
@@ -47,8 +47,8 @@ public class LyricFragment extends SimpleFragment {
 
     @Override
     void update(Bundle bundle) {
-        Log.d(TAG, "update");
         Song mSong = (Song) bundle.get("song");
+		Log.d(TAG, "update():"+mSong.getLyric());
         songLyricTextView.setLyric(mSong.getLyric());
     }
 }

@@ -82,6 +82,7 @@ public class DownloadMp3Util {
         @Override
         protected Boolean doInBackground(String... params) {
             try {
+				Log.d(TAG, "download mp3:"+params[0]);
                 // 下载mp3
                 URL url = new URL(params[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -96,7 +97,7 @@ public class DownloadMp3Util {
                 }
                 mis.close();
                 fos.close();
-
+		
                 // 下载封面
                 Bitmap bitmap = mSong.getBitmap();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -130,6 +131,7 @@ public class DownloadMp3Util {
         /* 下载完成通知 */
         @Override
         protected void onPostExecute(Boolean result) {
+			Log.d(TAG, "download mp3 finished:"+result);
             super.onPostExecute(result);
             DetailActivity activity = (DetailActivity)mmContext;
             mmContext.onDownloadFinished(mSong);
@@ -137,6 +139,7 @@ public class DownloadMp3Util {
     }
 
     public boolean download(){
+		Log.d(TAG, "download()");
         boolean result = false;
         String lyric = mSong.getLyric();
         if(mSong.getMp3Url() == null || lyric == null){
@@ -153,19 +156,20 @@ public class DownloadMp3Util {
                 downLoadMp3AsyncTask.execute(mSong.getMp3Url(), mSong.getPicUrl());
                 result = true;
             }catch(IOException e){
-                Log.d("IMUSICPLAYER_ERROR",e.getMessage());
+                Log.d(TAG, e.getMessage());
                 e.printStackTrace();
             }
             return result;
         }
     }
     public void search(){
+		Log.d(TAG, "search()");
         // 查找歌词
         new Thread(new Runnable() {
             @Override
             public void run() {
                 String lyricUrl = music163LyricUrl.replace("arg_id", mSong.getId());
-                Log.d("IMUSICPLAYER_LYRIC", lyricUrl);
+                Log.d(TAG, "search lyric:"+lyricUrl);
                 try{
                     URL url = new URL(lyricUrl);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -175,18 +179,18 @@ public class DownloadMp3Util {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream inputStream = connection.getInputStream();
                         String result = convertStreamToString(inputStream);
-                        Log.d("IMUSICPLAYER_LYRIC", result);
+                        Log.d(TAG, "search lyric finished:"+result);
                         JSONObject obj = new JSONObject(result);
                         String tempLyric = "";
                         try {
                             tempLyric = obj.getJSONObject(RESPONSE_DATA_LRC).getString(RESPONSE_DATA_LYRIC);
                         }catch (JSONException e){
-                            Log.d("SEARCH_ERROR", e.getMessage());
+                            Log.d(TAG, e.getMessage());
                             e.printStackTrace();
                         }
                         final String lyric = tempLyric;
-//                        LyricPlayer lyricPlayer = new LyricPlayer(mContext, lyric);
                         mSong.setLyric(lyric);
+						Log.d(TAG, "search artwork:"+mSong.getPicUrl());
                         // 请求音乐封面
                         URL mUrl = new URL(mSong.getPicUrl());
                         HttpURLConnection mConnection = (HttpURLConnection) mUrl.openConnection();
@@ -200,6 +204,7 @@ public class DownloadMp3Util {
                             mContext.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+									Log.d(TAG, "search artwork finished:");
                                     ((EventListeners)mContext).onSearchFinished(mSong);
                                 }
                             });
@@ -213,7 +218,7 @@ public class DownloadMp3Util {
 //                        });
                     }
                 }catch(Exception e){
-                    Log.d("SEARCH_ERROR", e.getMessage());
+					Log.d(TAG, "search error:"+e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -221,24 +226,36 @@ public class DownloadMp3Util {
     }
 
     public void remove() {
+		Log.d(TAG, "remove()");
         File tempDir = new File(mSong.getMp3Url());
         File tempAlbumDir = new File(mAlbumDir + "/" + mSong.getTitle() + ".jpg");
         File tempLyricDir = new File(mLyricDir + "/" + mSong.getTitle() + ".lrc");
         if (tempDir.exists()) {
+			Log.d(TAG, "file exists:"+mSong.getMp3Url());
             tempDir.delete();
-        }
+        }else{
+			Log.d(TAG, "file not exists:"+mSong.getMp3Url());
+		}
         if (tempAlbumDir.exists()) {
+			Log.d(TAG, "file exists:"+mAlbumDir + "/" + mSong.getTitle() + ".jpg");
             tempAlbumDir.delete();
-        }
+        }else{
+			Log.d(TAG, "file not exists:"+mAlbumDir + "/" + mSong.getTitle() + ".jpg");
+		}
         if (tempLyricDir.exists()) {
+			Log.d(TAG, "file exists:"+mLyricDir + "/" + mSong.getTitle() + ".lrc");
             tempLyricDir.delete();
-        }
+        }else{
+			Log.d(TAG, "file not exists:"+mLyricDir + "/" + mSong.getTitle() + ".lrc");
+		}
     }
     public InputStream readAlbumImage(){
+		Log.d(TAG, "readAlbumImage()");
         InputStream is = null;
         try {
             is = new FileInputStream(new File(mAlbumDir + "/" + mSong.getTitle() + ".jpg"));
         }catch (FileNotFoundException e){
+			Log.d(TAG, "readAlbumImage:"+e.getMessage());
             return mContext.getClass().getResourceAsStream("/res/drawable/ic_default_artwork.png");
         }finally {
             return is;
@@ -246,6 +263,7 @@ public class DownloadMp3Util {
     }
 
     public String readLyric(){
+		Log.d(TAG, "readLyric()");
         String content = "";
         InputStream is = null;
         try{
@@ -261,7 +279,7 @@ public class DownloadMp3Util {
             }
             content =  byteArray.toString();
         }catch(FileNotFoundException e0){
-            e0.printStackTrace();
+			Log.d(TAG, "readLyric:"+e0.getMessage());
             return "";
         } finally {
             return content;

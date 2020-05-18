@@ -134,4 +134,15 @@ public class Song implements Serializable {
     public void setBitmap(Bitmap bitmap) {
         this.bitmap = bitmap;
     }
+	
+	public String toString(){
+		StringBuilder builder = new StringBuilder();
+		builder.append("{<id:").append(this.id).append(">, ")
+			.append("<title:").append(this.title).append(">, ")
+			.append("<singer:").append(this.singer).append(">, ")
+			.append("<epname:").append(this.epname).append(">, ")
+			.append("<picUrl:").append(this.picUrl).append(">, ")
+			.append("<mp3Url:").append(this.mp3Url).append(">}");
+		return builder.toString();
+	}
 }

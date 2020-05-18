@@ -1,3 +1,18 @@
+/**
+ * Copyright 2019 Ibu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ibu.imusicplayer;
 
 import android.content.Context;
@@ -39,7 +54,7 @@ public class SongListActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "onCreate()");
         // 隐藏顶部标题
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
@@ -50,7 +65,7 @@ public class SongListActivity extends AppCompatActivity {
         initView();
     }
     void initView(){
-        Log.d(TAG, "initView");
+        Log.d(TAG, "initView()");
         // 初始化标题
         TextView title = findViewById(R.id.song_db_type);
         title.setText(dbType);
@@ -81,12 +96,14 @@ public class SongListActivity extends AppCompatActivity {
                     "取消全选"};
             @Override
             public void onClick(View v) {
+				Log.d(TAG, "click selectAll");
                 selected = (selected + 1) % 2;
                 for (int i = 0; i < songAdapter.mSongList.size(); i++) {
                     songAdapter.mSongList.get(i).put(SongListAdapter.SELECTED_STATE,
                             selected);
                     songAdapter.notifyDataSetChanged();
                 }
+				Log.d(TAG, "selectAll change to:"+selectTexts[selected]);
                 selectAllView.setText(selectTexts[selected]);
             }
         });
@@ -94,6 +111,7 @@ public class SongListActivity extends AppCompatActivity {
         deleteView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+				Log.d(TAG, "click delete");
                 List<Map> deleteList = new ArrayList<>();
                 List newList = new ArrayList(songAdapter.mSongList);
                 for (int i = 0; i < songAdapter.mSongList.size(); i++) {
@@ -102,6 +120,7 @@ public class SongListActivity extends AppCompatActivity {
                         deleteList.add(songAdapter.mSongList.get(i));
                     }
                 }
+				Log.d(TAG, "delete all:"+deleteList.toString());
                 doSongDelete(deleteList);
                 songAdapter.mSongList.removeAll(deleteList);
                 editView.callOnClick();
@@ -110,6 +129,7 @@ public class SongListActivity extends AppCompatActivity {
 
     }
     void doSongDelete(List<Map> deleteList){
+		Log.d(TAG, "delete all:"+deleteList.toString());
         BaseOpenHelper downloadOpenHelper = OpenHelperFactory.getOpenHelper(this,
                 OpenHelperFactory.DB_TYPE.DB_TYPE_DOWNLOAD);
 
@@ -129,7 +149,7 @@ public class SongListActivity extends AppCompatActivity {
     }
 
     void changeDeletePanel(){
-        Log.d(TAG, "changeDeletePanel");
+        Log.d(TAG, "changeDeletePanel():to:"+editCount);
         if(editCount == 0) {
             deleteBlock.setVisibility(View.GONE);
             for (int i = 0; i < songAdapter.mSongList.size(); i++) {
@@ -144,7 +164,7 @@ public class SongListActivity extends AppCompatActivity {
     }
     @Override
     protected void onStart() {
-        Log.d(TAG, "onStart");
+        Log.d(TAG, "onStart()");
         super.onStart();
         dbHelper = OpenHelperFactory.getOpenHelper(this, dbType);
         List<Song> songList = dbHelper.queryAll();
@@ -158,17 +178,6 @@ public class SongListActivity extends AppCompatActivity {
             listitem.add(songitem);
         }
         songAdapter = new SongListAdapter(this, listitem);
-//        for (Song song: songList) {
-//            Map<String, Object> songitem = new HashMap<String, Object>();
-//            songitem.put("selectIcon", R.drawable.ic_file_not_selected);
-//            songitem.put("title", song.getTitle());
-//            songitem.put("detail", song.getSinger()+" - "+song.getEpname());
-//            listitem.add(songitem);
-//        }
-//        songAdapter = new SongAdapter(getApplicationContext(),listitem,
-//                R.layout.list_song,new String[]{"selectIcon","title","detail"},
-//                new int[]{R.id.song_select_icon,R.id.song_item_title,R.id.song_item_singer_epname},
-//                songList);
         songListView.setAdapter(songAdapter);
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -179,7 +188,6 @@ public class SongListActivity extends AppCompatActivity {
                     songAdapter.mSongList.get(position).put(SongListAdapter.SELECTED_STATE,
                             selected);
                     songAdapter.notifyDataSetChanged();
-
                 }
                 else if(editCount == 0) {
                     Song songObj = (Song)songAdapter.mSongList.get(position).get(SongListAdapter.SONG);
@@ -226,6 +234,7 @@ public class SongListActivity extends AppCompatActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+			Log.d(TAG, "getView():position:"+position);
             ViewHolder holder = null;
             if (convertView == null) {
                 holder=new ViewHolder();
@@ -252,49 +261,4 @@ public class SongListActivity extends AppCompatActivity {
             public TextView mSongEpname;
         };
     }
-
-//    class SongAdapter extends SimpleAdapter {
-//        private List<Song> mSongList;
-//        List<SelectImageView> songSelectIconList;
-//        SongAdapter(Context context, List<? extends Map<String, ?>> data,
-//                                 int resource, String[] from, int[] to,
-//        List list){
-//            super(context, data, resource,from, to);
-//            mSongList = list;
-//            songSelectIconList =  new ArrayList<>();
-//        }
-//
-//        @Override
-//        public View getView(final int position, View convertView, ViewGroup parent) {
-//            Log.d(TAG, "SongAdapter::getView::"+position);
-//            View view = super.getView(position, convertView, parent);
-//            if(songSelectIconList.size() == 0 || position >= songSelectIconList.size()){
-//                Log.d(TAG, "SongAdapter::getView::firstLoaded");
-//                SelectImageView songSelectIcon = view.findViewById(R.id.song_select_icon);
-//                songSelectIcon.setSelected(SelectImageView.NOT_SELECTED);
-//                songSelectIconList.add(position, songSelectIcon);
-//            }
-//            // add listener to connect
-//            view.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    Log.d(TAG, "click song "+position);
-//                    if(editCount == 1) {
-//                        int selected = (songSelectIconList.get(position).getSelected() +1)%2;
-//                        songSelectIconList.get(position).setSelected(selected);
-//                    }
-//                    else if(editCount == 0) {
-//                        Song songObj = mSongList.get(position);
-//                        Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
-//                        intent.putExtra(BundleConstants.DB_TYPE, dbType);
-//                        intent.putExtra(BundleConstants.DETAIL_CURRENT_SONG, songObj);
-//                        intent.putExtra(BundleConstants.DETAIL_SONG_LIST, (Serializable) mSongList);
-//                        startActivity(intent);
-//                    }
-//                }
-//            });
-//            return view;
-//        }
-//    }
-
 }

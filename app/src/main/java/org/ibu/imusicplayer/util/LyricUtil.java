@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
  * 歌词工具类
  */
 public final class LyricUtil {
+	private static final String TAG = "LyricUtil";
     private LyricUtil(){}
 
     /* 将歌词[00:01.840]括号中的数字转换成毫秒 */
@@ -34,7 +35,7 @@ public final class LyricUtil {
             String m1 = matcher.group(1);
             String m2 = matcher.group(2);
             String m3 = matcher.group(3);
-            Log.d("IMUSICPLAYER", m1 + ":" + m2 + "." + m3);
+            Log.d(TAG, m1 + ":" + m2 + "." + m3);
             return Integer.valueOf(m1) * 60 * 1000 + Integer.valueOf(m2) * 1000 + Integer.valueOf(m3);
         }
         return 0;
@@ -42,6 +43,7 @@ public final class LyricUtil {
 
     /* 将毫秒转换成歌曲进度条数值02:33 */
     public static String encodeTime(int time){
+		Log.d(TAG, "encodeTime:"+time);
         String m1 = "00";
         String m2 = "00";
         if(time / 60000 != 0){

@@ -116,7 +116,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      *       maxValue = decodeTime(lastTime);
      */
     void initSeekBar(){
-        Log.d(TAG, "initSeekBar");
+        Log.d(TAG, "initSeekBar()");
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             // todo 监听滑动条滑动事件不要重写这个方法，因为调用setProgress时也会调用这个方法
             @Override
@@ -132,6 +132,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                         searchMp3Url();
                     }else{
                         final int i = seekBar.getProgress();
+						Log.d(TAG, "seekbar to:"+i);
                         mediaPlayer.seekTo(i);
                         //lyricFragment.songLyricTextView.seekTo(i);
                         mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
@@ -160,13 +161,15 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                                 }
                                             });
                                         }catch (IllegalStateException e){
-                                            Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+											Log.d(TAG, "mediaPlayer throws IllegalStateException for in end state"+e.getMessage());
                                         }
                                     }
                                 },0, 1000);
                             }
                         });
-                        seekBarCurrentValue.setText(encodeTime(i));
+						String encodedTime = encodeTime(i);
+						Log.d(TAG, "seekbar to time:"+encodedTime);
+                        seekBarCurrentValue.setText(encodedTime);
                     }
                 }
             }
@@ -177,7 +180,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 初始化视图内容
      */
     void initViewContent(){
-        Log.d(TAG, "initViewContent");
+        Log.d(TAG, "initViewContent()");
         // 初始化歌曲名信息
         songTitleTextView.setText(mSong.getTitle());
         songSingerEpnameTextView.setText(mSong.getSinger()+" - "+mSong.getEpname());
@@ -191,6 +194,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 //            collectIcon.setImageResource(R.drawable.ic_collected_red_24dp);
 //        }
         if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_LOCAL) || downloadOpenHelper.exist(mSong.getId()) != null){
+			Log.d(TAG, "load song from local db...");
             DownloadMp3Util downloadMp3Util = new DownloadMp3Util(this, mSong);
             // 初始化封面
             InputStream mInputStream = downloadMp3Util.readAlbumImage();
@@ -211,6 +215,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             }).start();
         }
         else{
+			Log.d(TAG, "load song from network db...");
             DownloadMp3Util downloadMp3Util = new DownloadMp3Util(DetailActivity.this, mSong);
             downloadMp3Util.search();
         }
@@ -218,7 +223,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 
     @Override
     public void onSearchFinished(Song song) {
-        Log.d(TAG, "onSearchFinished");
+        Log.d(TAG, "onSearchFinished()"+song);
         Bundle bundle = new Bundle();
         bundle.putSerializable("song", song);
 
@@ -235,6 +240,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 
     @Override
     public void onDownloadFinished(Song song) {
+		Log.d(TAG, "onDownloadFinished()"+song);
         downloadOpenHelper.insert(song);
         Bundle bundle = new Bundle();
         bundle.putSerializable("song", song);
@@ -248,9 +254,10 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 
         @Override
         public void onClick(View v) {
+			Log.d(TAG, "click btn play");
             // 显示播放按钮
             if(!isPlaying){
-                Log.d(TAG,"isPlaying=false");
+                Log.d(TAG,"isPlaying=false, to play state...");
                 //暂停转为播放状态
                 if(mediaPlayer!=null){
                     // 更新按钮图片
@@ -287,7 +294,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     searchMp3Url();
                 }
             }else{// 显示暂停按钮
-                Log.d("IMUSICPLAYER_MP3","isPlaying=true");
+                Log.d(TAG,"isPlaying=true, to pause state...");
                 if(mediaPlayer != null && mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
                     lyricFragment.songLyricTextView.pause();
@@ -308,7 +315,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     View.OnClickListener nextButtonListener;
 
     void changeFragment(){
-        Log.d(TAG, "changeFragment");
+        Log.d(TAG, "changeFragment():"+((fragmentCount+1) % 2));
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.hide(fragments[fragmentCount % 2]);
         fragmentCount += 1;
@@ -319,7 +326,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 初始化视图
      */
     void initView(){
-        Log.d(TAG, "initView");
+        Log.d(TAG, "initView()");
         // 初始化 fragment
         Bundle bundle1 = new Bundle();
         bundle1.putSerializable("song", mSong);
@@ -388,6 +395,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         previousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+				Log.d(TAG, "click btn previous");
                 int cursor = mSongList.indexOf(mSong);
                 switch (playMode){
                     case 0:
@@ -400,6 +408,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                 }
                 mSong = null;
                 mSong = mSongList.get(cursor);
+				Log.d(TAG, "change song to:"+mSong);
                 if(mediaPlayer != null){
                     isPlaying = false;
                     seekBar.setProgress(0);
@@ -425,8 +434,10 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
         playModeView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+				Log.d(TAG, "click btn playMode");
                 playMode = (playMode + 1) % playModes.length;
                 playModeView.setImageResource(playModeResources[playMode]);
+				Log.d(TAG, "change playMode to:"+playModeToasts[playMode]);
                 Toast.makeText(DetailActivity.this, playModeToasts[playMode], Toast.LENGTH_SHORT).show();
             }
         });
@@ -434,6 +445,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     class NextButtonListener implements View.OnClickListener{
         @Override
         public void onClick(View v) {
+			Log.d(TAG, "click btn next");
             int cursor = mSongList.indexOf(mSong);
             switch (playMode){
                 case 0:
@@ -446,6 +458,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             }
             mSong = null;
             mSong = mSongList.get(cursor);
+			Log.d(TAG, "change song to:"+mSong);
             if(mediaPlayer != null){
                 isPlaying = false;
                 seekBar.setProgress(0);
@@ -467,7 +480,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
 //    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "onCreate()");
         // 隐藏顶部标题
         getSupportActionBar().hide();
         super.onCreate(savedInstanceState);
@@ -504,10 +517,9 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 从本地加载音频源
      */
     void searchMp3UrlFromStorage(){
-        Log.d(TAG, "searchMp3UrlFromStorage");
         try {
             String mp3Url = mSong.getMp3Url();
-            Log.d(TAG, "使用本地资源"+mp3Url);
+			Log.d(TAG, "searchMp3UrlFromStorage():mp3Url:"+ mp3Url);
             ((ArtworkFragment)artworkFragment).downloadIcon.setVisibility(View.GONE);
             // 初始化mediaPlayer
             Uri mp3Uri = Uri.fromFile(new File(mp3Url)); // initialize Uri here
@@ -546,7 +558,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                     });
 
                                 } catch (IllegalStateException e) {
-                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+									Log.d(TAG, "mediaPlayer throws IllegalStateException for in end state"+e.getMessage());
                                 }
                         }
                     }, 0, 1000);
@@ -556,12 +568,12 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    Log.d("IMUSICPLAYER_COMPLETE", "总时长："+mp.getDuration());
+					Log.d(TAG, "play completed: total time:"+mp.getDuration());
                     nextButtonListener.onClick(null);
                 }
             });
         }catch (Exception e){
-            Log.d("IMUSICPLAYER_MP3", e.getMessage());
+			Log.d(TAG, "searchMp3UrlFromStorage fail:"+e.getMessage());
             e.printStackTrace();
         }
     }
@@ -573,7 +585,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
             @Override
             public void run() {
                 String searchMp3Url = music163Mp3Url.replace("arg_id", mSong.getId());
-                Log.d("IMUSICPLAYER_MP3", searchMp3Url);
+				Log.d(TAG, "searchMp3UrlFromNetwork():"+ searchMp3Url);
                 try {
                     URL url = new URL(searchMp3Url);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -583,14 +595,14 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream inputStream = connection.getInputStream();
                         String result = convertStreamToString(inputStream);
-                        Log.d("IMUSICPLAYER_MP3", result);
+						Log.d(TAG, result);
                         JSONObject obj = new JSONObject(result);
                         final JSONObject songObj = obj.getJSONArray(RESPONSE_DATA_DATA).getJSONObject(0);
                         // 通过HTTP流媒体从远程URL播放
                         String mp3Url = songObj.getString(RESPONSE_DATA_URL);
                         // url可能是null字符串
                         if (mp3Url != null && !mp3Url.trim().equalsIgnoreCase("null")) {
-                            Log.d("IMUSICPLAYER_MP3_URL", "使用网络资源"+songObj.getString(RESPONSE_DATA_URL));
+							Log.d(TAG, "searchMp3UrlFromNetwork():mp3Url:"+ mp3Url);
                             // 设置MP3url
                             mSong.setMp3Url(mp3Url);
                             // 初始化mediaPlayer
@@ -607,7 +619,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                         public void run() {
                                             // 数据库中不存在才下载
                                             if (downloadOpenHelper.exist(mSong.getId()) == null) {
-                                                Log.d("IMUSICPLAYER_DOWNLOAD", "" + (downloadOpenHelper.exist(mSong.getId()) == null));
+												Log.d(TAG, "searchMp3UrlFromNetwork():downloadOpenHelper.exist:"+ (downloadOpenHelper.exist(mSong.getId()) == null));
                                                 ((ArtworkFragment)artworkFragment).updateDownloadIcon();
 //                                                updateCollectIcon();
                                             }
@@ -645,7 +657,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                                                     });
 
                                                 } catch (IllegalStateException e) {
-                                                    Log.d("IMUSICPLAYER_ILLEAGL", "mediaPlayer throws IllegalStateException for in end state");
+													Log.d(TAG, "mediaPlayer throws IllegalStateException for in end state"+e.getMessage());
                                                 }
                                             }
                                     }, 0, 1000);
@@ -655,7 +667,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                                 @Override
                                 public void onCompletion(MediaPlayer mp) {
-                                    Log.d("IMUSICPLAYER_COMPLETE", "总时长："+mp.getDuration());
+                                    Log.d(TAG, "play completed: total time:"+mp.getDuration());
                                     nextButtonListener.onClick(null);
                                 }
                             });
@@ -678,7 +690,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
                     // 在子线程中跟新UI
 
                 } catch (Exception e) {
-                    Log.d("IMUSICPLAYER_MP3", e.getMessage());
+					Log.d(TAG, "searchMp3UrlFromNetwork fail:"+ e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -689,6 +701,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
      * 加载音频源
      */
     void searchMp3Url(){
+		Log.d(TAG, "searchMp3Url()");
         if(dbType.equals(OpenHelperFactory.DB_TYPE.DB_TYPE_COLLECT)){
             if(downloadOpenHelper.exist(mSong.getId()) != null){
                 searchMp3UrlFromStorage();
@@ -708,6 +721,7 @@ public class DetailActivity extends AppCompatActivity implements EventListeners 
     }
     @Override
     protected void onDestroy() {
+		Log.d(TAG, "onDestroy()");
         super.onDestroy();
         if(mediaPlayer != null){
             //mediaPlayer不用了需要销毁
